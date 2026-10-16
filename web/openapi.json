@@ -1,0 +1,2701 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "hackeval API",
+    "version": "0.1.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/api/session": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/hackathons": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "deadline": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "activeRubricId": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "activeRubricVersion": {
+                        "nullable": true,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "deadline",
+                      "activeRubricId",
+                      "activeRubricVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][\\w-]{0,63}$"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "deadline": {
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "deadline": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "activeRubricId": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "activeRubricVersion": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "deadline",
+                    "activeRubricId",
+                    "activeRubricVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hackathon": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "deadline": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "activeRubricId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "activeRubricVersion": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "deadline",
+                        "activeRubricId",
+                        "activeRubricVersion"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "rubric": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        },
+                        "version": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "criteria": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9_]*$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "weight": {
+                                "type": "number",
+                                "minimum": 0,
+                                "exclusiveMinimum": true
+                              },
+                              "sources": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "deck",
+                                    "video",
+                                    "repo"
+                                  ]
+                                }
+                              },
+                              "levels": {
+                                "minItems": 2,
+                                "maxItems": 10,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "label": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "description": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "label",
+                                    "description"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "description",
+                              "weight",
+                              "sources",
+                              "levels"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "tracks": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "version",
+                        "criteria",
+                        "tracks"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "byStatus": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "number"
+                      }
+                    },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "submissions": {
+                          "type": "number"
+                        },
+                        "usage": {
+                          "type": "object",
+                          "properties": {
+                            "llmCalls": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "inputTokens": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "outputTokens": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "jevCalls": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "byModel": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "object",
+                                "properties": {
+                                  "calls": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "inputTokens": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "outputTokens": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": [
+                                  "calls",
+                                  "inputTokens",
+                                  "outputTokens"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "llmCalls",
+                            "inputTokens",
+                            "outputTokens",
+                            "jevCalls",
+                            "byModel"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "estimatedCostUsd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "costPerSubmissionUsd": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "unpriced": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "submissions",
+                        "usage",
+                        "estimatedCostUsd",
+                        "costPerSubmissionUsd",
+                        "unpriced"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "hackathon",
+                    "rubric",
+                    "byStatus",
+                    "usage"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/rubric": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "yaml": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200000
+                  }
+                },
+                "required": [
+                  "yaml"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "staled": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version",
+                    "staled"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/review-queue": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "teamName": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "queued",
+                          "needs_attention",
+                          "disqualified",
+                          "gate_review",
+                          "scoring",
+                          "needs_review",
+                          "finalized",
+                          "stale",
+                          "superseded",
+                          "error"
+                        ]
+                      },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "teamName",
+                      "status",
+                      "reasons"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/leaderboard": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": {
+                        "type": "number"
+                      },
+                      "submissionId": {
+                        "type": "string"
+                      },
+                      "teamName": {
+                        "type": "string"
+                      },
+                      "finalScore": {
+                        "type": "number"
+                      },
+                      "autoScore": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "overridden": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "rank",
+                      "submissionId",
+                      "teamName",
+                      "finalScore",
+                      "autoScore",
+                      "overridden"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/leaderboard.csv": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/import": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created": {
+                      "type": "number"
+                    },
+                    "updated": {
+                      "type": "number"
+                    },
+                    "unchanged": {
+                      "type": "number"
+                    },
+                    "ignoredLate": {
+                      "type": "number"
+                    },
+                    "ignoredOlder": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "late": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "updated",
+                    "unchanged",
+                    "ignoredLate",
+                    "ignoredOlder",
+                    "errors",
+                    "late"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/submissions": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "needs_attention",
+                "disqualified",
+                "gate_review",
+                "scoring",
+                "needs_review",
+                "finalized",
+                "stale",
+                "superseded",
+                "error"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "teamName": {
+                        "type": "string"
+                      },
+                      "repoUrl": {
+                        "type": "string"
+                      },
+                      "track": {
+                        "nullable": true,
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "queued",
+                          "needs_attention",
+                          "disqualified",
+                          "gate_review",
+                          "scoring",
+                          "needs_review",
+                          "finalized",
+                          "stale",
+                          "superseded",
+                          "error"
+                        ]
+                      },
+                      "autoScore": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "finalScore": {
+                        "nullable": true,
+                        "type": "number"
+                      },
+                      "confidence": {
+                        "nullable": true,
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "teamName",
+                      "repoUrl",
+                      "track",
+                      "status",
+                      "autoScore",
+                      "finalScore",
+                      "confidence"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "submission": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "hackathonId": {
+                          "type": "string"
+                        },
+                        "externalId": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "teamName": {
+                          "type": "string"
+                        },
+                        "track": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "repoUrl": {
+                          "type": "string"
+                        },
+                        "repoRef": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "deck": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "deck",
+                                "video"
+                              ]
+                            },
+                            "origin": {
+                              "type": "string",
+                              "enum": [
+                                "url",
+                                "upload"
+                              ]
+                            },
+                            "uri": {
+                              "type": "string"
+                            },
+                            "sha256": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "unreachableReason": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "origin",
+                            "uri",
+                            "sha256",
+                            "unreachableReason"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "video": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "deck",
+                                "video"
+                              ]
+                            },
+                            "origin": {
+                              "type": "string",
+                              "enum": [
+                                "url",
+                                "upload"
+                              ]
+                            },
+                            "uri": {
+                              "type": "string"
+                            },
+                            "sha256": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "unreachableReason": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "origin",
+                            "uri",
+                            "sha256",
+                            "unreachableReason"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "submittedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "revision": {
+                          "default": 1,
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "hackathonId",
+                        "externalId",
+                        "teamName",
+                        "track",
+                        "repoUrl",
+                        "repoRef",
+                        "deck",
+                        "video",
+                        "submittedAt",
+                        "revision"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "needs_attention",
+                        "disqualified",
+                        "gate_review",
+                        "scoring",
+                        "needs_review",
+                        "finalized",
+                        "stale",
+                        "superseded",
+                        "error"
+                      ]
+                    },
+                    "evaluation": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "submissionId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "needs_attention",
+                            "disqualified",
+                            "gate_review",
+                            "scoring",
+                            "needs_review",
+                            "finalized",
+                            "stale",
+                            "superseded",
+                            "error"
+                          ]
+                        },
+                        "rubricId": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "rubricVersion": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "repo": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "committerDate": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "commitsAfterDeadline": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "readmeExcerpt": {
+                              "default": "",
+                              "type": "string"
+                            },
+                            "requestedRef": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "resolvedRef": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "commitSha",
+                            "committerDate",
+                            "commitsAfterDeadline",
+                            "fileCount",
+                            "readmeExcerpt",
+                            "requestedRef",
+                            "resolvedRef"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "evidence": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "installs": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manifest",
+                                      "lockfile",
+                                      "dockerfile",
+                                      "script",
+                                      "notebook"
+                                    ]
+                                  },
+                                  "ecosystem": {
+                                    "type": "string",
+                                    "enum": [
+                                      "pypi",
+                                      "npm"
+                                    ]
+                                  },
+                                  "package": {
+                                    "type": "string"
+                                  },
+                                  "versionSpec": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "path",
+                                  "kind",
+                                  "ecosystem",
+                                  "package",
+                                  "versionSpec"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "usageSites": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "line": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "symbol": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "import",
+                                      "client_init",
+                                      "call",
+                                      "http_call"
+                                    ]
+                                  },
+                                  "snippet": {
+                                    "type": "string"
+                                  },
+                                  "inTest": {
+                                    "default": false,
+                                    "type": "boolean"
+                                  },
+                                  "typeOnly": {
+                                    "default": false,
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "path",
+                                  "line",
+                                  "symbol",
+                                  "kind",
+                                  "snippet",
+                                  "inTest",
+                                  "typeOnly"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "unresolved": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "envSignals": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "var": {
+                                    "type": "string"
+                                  },
+                                  "hasRealValue": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "path",
+                                  "var",
+                                  "hasRealValue"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "configFiles": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "secretExposed": {
+                              "default": false,
+                              "type": "boolean"
+                            },
+                            "redactedKeys": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "installs",
+                            "usageSites",
+                            "unresolved",
+                            "envSignals",
+                            "configFiles",
+                            "secretExposed",
+                            "redactedKeys"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "gate": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "review",
+                                "needs_attention"
+                              ]
+                            },
+                            "checks": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "boolean"
+                              }
+                            },
+                            "reasons": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "flags": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "jev": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "questionId": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "noul",
+                                      "choice",
+                                      "score"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "probabilities": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "confidence": {
+                                    "type": "number"
+                                  },
+                                  "model": {
+                                    "type": "string"
+                                  },
+                                  "requestId": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "questionId",
+                                  "type",
+                                  "value",
+                                  "probabilities",
+                                  "confidence",
+                                  "model",
+                                  "requestId"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "feedbackMd": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "checks",
+                            "reasons",
+                            "flags",
+                            "jev",
+                            "feedbackMd"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "mediaUnreachable": {
+                          "default": {},
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "media": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "deck": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "object",
+                              "properties": {
+                                "sourceFormat": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pptx",
+                                    "pdf"
+                                  ]
+                                },
+                                "slideCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "slides": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "index": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "text": {
+                                        "type": "string"
+                                      },
+                                      "notes": {
+                                        "default": "",
+                                        "type": "string"
+                                      },
+                                      "imagePath": {
+                                        "default": null,
+                                        "nullable": true,
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "index",
+                                      "text",
+                                      "notes",
+                                      "imagePath"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "imagesSampled": {
+                                  "default": false,
+                                  "type": "boolean"
+                                },
+                                "renderError": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "sourceFormat",
+                                "slideCount",
+                                "slides",
+                                "imagesSampled",
+                                "renderError"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "video": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "object",
+                              "properties": {
+                                "durationS": {
+                                  "type": "number"
+                                },
+                                "hasSpeech": {
+                                  "type": "boolean"
+                                },
+                                "transcript": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "startS": {
+                                        "type": "number"
+                                      },
+                                      "endS": {
+                                        "type": "number"
+                                      },
+                                      "text": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "startS",
+                                      "endS",
+                                      "text"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "keyframes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tS": {
+                                        "type": "number"
+                                      },
+                                      "imagePath": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "tS",
+                                      "imagePath"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "analyzedUntilS": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "durationS",
+                                "hasSpeech",
+                                "transcript",
+                                "keyframes",
+                                "analyzedUntilS"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "unreachable": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "deck",
+                            "video",
+                            "unreachable"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "prescreen": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "flags": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "trackFit": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "jev": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "questionId": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "noul",
+                                      "choice",
+                                      "score"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "probabilities": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "confidence": {
+                                    "type": "number"
+                                  },
+                                  "model": {
+                                    "type": "string"
+                                  },
+                                  "requestId": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "questionId",
+                                  "type",
+                                  "value",
+                                  "probabilities",
+                                  "confidence",
+                                  "model",
+                                  "requestId"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "flags",
+                            "trackFit",
+                            "jev"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "findings": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "source": {
+                                "type": "string",
+                                "enum": [
+                                  "deck",
+                                  "video",
+                                  "repo"
+                                ]
+                              },
+                              "summary": {
+                                "type": "string"
+                              },
+                              "findings": {
+                                "default": [],
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "criterionId": {
+                                      "type": "string"
+                                    },
+                                    "observations": {
+                                      "default": [],
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "citations": {
+                                      "default": [],
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "source": {
+                                            "type": "string",
+                                            "enum": [
+                                              "deck",
+                                              "video",
+                                              "repo"
+                                            ]
+                                          },
+                                          "ref": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "source",
+                                          "ref"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "absent": {
+                                      "default": false,
+                                      "type": "boolean"
+                                    },
+                                    "provisionalLabel": {
+                                      "default": null,
+                                      "nullable": true,
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "criterionId",
+                                    "observations",
+                                    "citations",
+                                    "absent",
+                                    "provisionalLabel"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "claims": {
+                                "default": [],
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "redFlags": {
+                                "default": [],
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "source",
+                              "summary",
+                              "findings",
+                              "claims",
+                              "redFlags"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "scorecard": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "scores": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "criterionId": {
+                                    "type": "string"
+                                  },
+                                  "levelLabel": {
+                                    "type": "string"
+                                  },
+                                  "level": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "rationale": {
+                                    "type": "string"
+                                  },
+                                  "citations": {
+                                    "default": [],
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "source": {
+                                          "type": "string",
+                                          "enum": [
+                                            "deck",
+                                            "video",
+                                            "repo"
+                                          ]
+                                        },
+                                        "ref": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "source",
+                                        "ref"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "criterionId",
+                                  "levelLabel",
+                                  "level",
+                                  "rationale",
+                                  "citations"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "strengths": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "weaknesses": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "inconsistencies": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "feedbackMd": {
+                              "default": "",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "scores",
+                            "strengths",
+                            "weaknesses",
+                            "inconsistencies",
+                            "feedbackMd"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "calibration": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "criteria": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "criterionId": {
+                                    "type": "string"
+                                  },
+                                  "llmLevel": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "jevScore": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "jevProbs": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "agreement": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "sufficiency": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "number"
+                                  },
+                                  "levelGap": {
+                                    "default": null,
+                                    "nullable": true,
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "criterionId",
+                                  "llmLevel",
+                                  "jevScore",
+                                  "jevProbs",
+                                  "agreement",
+                                  "sufficiency",
+                                  "levelGap"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "autoScore": {
+                              "type": "number"
+                            },
+                            "confidence": {
+                              "type": "number"
+                            },
+                            "route": {
+                              "type": "string",
+                              "enum": [
+                                "accept",
+                                "review"
+                              ]
+                            },
+                            "reasons": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "discrepancyNotes": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "flags": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "required": [
+                            "criteria",
+                            "autoScore",
+                            "confidence",
+                            "route",
+                            "reasons",
+                            "discrepancyNotes",
+                            "flags"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "reviews": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "reviewer": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "gate",
+                                  "score",
+                                  "attention"
+                                ]
+                              },
+                              "decision": {
+                                "type": "string",
+                                "enum": [
+                                  "accept",
+                                  "override",
+                                  "disqualify",
+                                  "reinstate",
+                                  "attach",
+                                  "requeue"
+                                ]
+                              },
+                              "overrides": {
+                                "default": {},
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
+                              },
+                              "notes": {
+                                "default": "",
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              "rubricVersion": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "reviewer",
+                              "kind",
+                              "decision",
+                              "overrides",
+                              "notes",
+                              "at",
+                              "rubricVersion"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "usage": {
+                          "default": {
+                            "llmCalls": 0,
+                            "inputTokens": 0,
+                            "outputTokens": 0,
+                            "jevCalls": 0,
+                            "byModel": {}
+                          },
+                          "type": "object",
+                          "properties": {
+                            "llmCalls": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "inputTokens": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "outputTokens": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "jevCalls": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "byModel": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "object",
+                                "properties": {
+                                  "calls": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "inputTokens": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "outputTokens": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": [
+                                  "calls",
+                                  "inputTokens",
+                                  "outputTokens"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "llmCalls",
+                            "inputTokens",
+                            "outputTokens",
+                            "jevCalls",
+                            "byModel"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "autoScore": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "finalScore": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "error": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "submissionId",
+                        "status",
+                        "rubricId",
+                        "rubricVersion",
+                        "repo",
+                        "evidence",
+                        "gate",
+                        "mediaUnreachable",
+                        "media",
+                        "prescreen",
+                        "findings",
+                        "scorecard",
+                        "calibration",
+                        "reviews",
+                        "usage",
+                        "autoScore",
+                        "finalScore",
+                        "error"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "calibration": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "criteria": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "criterionId": {
+                                "type": "string"
+                              },
+                              "llmLevel": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "jevScore": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "jevProbs": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "array",
+                                "items": {
+                                  "type": "number"
+                                }
+                              },
+                              "agreement": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "sufficiency": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "levelGap": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "criterionId",
+                              "llmLevel",
+                              "jevScore",
+                              "jevProbs",
+                              "agreement",
+                              "sufficiency",
+                              "levelGap"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "autoScore": {
+                          "type": "number"
+                        },
+                        "confidence": {
+                          "type": "number"
+                        },
+                        "route": {
+                          "type": "string",
+                          "enum": [
+                            "accept",
+                            "review"
+                          ]
+                        },
+                        "reasons": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "discrepancyNotes": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "flags": {
+                          "default": {},
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "criteria",
+                        "autoScore",
+                        "confidence",
+                        "route",
+                        "reasons",
+                        "discrepancyNotes",
+                        "flags"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "submission",
+                    "status",
+                    "evaluation",
+                    "calibration"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/decision": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "accept",
+                      "override",
+                      "disqualify",
+                      "reinstate",
+                      "requeue"
+                    ]
+                  },
+                  "reviewer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "overrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "decision",
+                  "reviewer"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "needs_attention",
+                        "disqualified",
+                        "gate_review",
+                        "scoring",
+                        "needs_review",
+                        "finalized",
+                        "stale",
+                        "superseded",
+                        "error"
+                      ]
+                    },
+                    "to": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "needs_attention",
+                        "disqualified",
+                        "gate_review",
+                        "scoring",
+                        "needs_review",
+                        "finalized",
+                        "stale",
+                        "superseded",
+                        "error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/attach": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "needs_attention",
+                        "disqualified",
+                        "gate_review",
+                        "scoring",
+                        "needs_review",
+                        "finalized",
+                        "stale",
+                        "superseded",
+                        "error"
+                      ]
+                    },
+                    "to": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "needs_attention",
+                        "disqualified",
+                        "gate_review",
+                        "scoring",
+                        "needs_review",
+                        "finalized",
+                        "stale",
+                        "superseded",
+                        "error"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hackathons/{hid}/runs": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "gate",
+                      "score",
+                      "all"
+                    ]
+                  },
+                  "only": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "retry": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "hackathonId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "done",
+                        "failed"
+                      ]
+                    },
+                    "report": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "byStatus": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "skipped": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "processed": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "byStatus",
+                        "errors",
+                        "skipped",
+                        "processed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "finishedAt": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "hackathonId",
+                    "state",
+                    "report",
+                    "error",
+                    "startedAt",
+                    "finishedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{runId}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "runId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "hackathonId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "running",
+                        "done",
+                        "failed"
+                      ]
+                    },
+                    "report": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "byStatus": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "skipped": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "processed": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "byStatus",
+                        "errors",
+                        "skipped",
+                        "processed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "finishedAt": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "hackathonId",
+                    "state",
+                    "report",
+                    "error",
+                    "startedAt",
+                    "finishedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/slides/{index}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "index",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/keyframes/{index}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "index",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/video": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}
