@@ -1,0 +1,65 @@
+{
+  "name": "hackathon-project-evaluator",
+  "version": "0.1.0",
+  "description": "Automated ArmorIQ hackathon judging: ArmorIQ gate, Jev decisions, Google ADK agents, Fastify API",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "hackeval": "dist/cli.js"
+  },
+  "scripts": {
+    "hackeval": "tsx src/cli.ts",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:live": "LIVE=1 vitest run tests/live",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "check": "biome check . && tsc --noEmit",
+    "api:spec": "tsx scripts/openapi.ts && npm --prefix web run api:types",
+    "web:build": "npm --prefix web run build",
+    "web:test": "npm --prefix web test",
+    "demo:seed": "tsx scripts/demo.ts",
+    "jev:probe": "tsx scripts/jevProbe.ts",
+    "demo:serve": "HACKEVAL_WORKSPACE=workspace/demo HACKEVAL_DB_PATH=workspace/demo/hackeval.db tsx src/cli.ts serve"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/static": "^10.1.5",
+    "@fastify/swagger": "^9.9.1",
+    "@google/adk": "^2.2.0",
+    "@google/genai": "^2.25.0",
+    "@typesafe-ai/sdk": "^0.7.0",
+    "better-sqlite3": "^13.0.3",
+    "commander": "^15.0.0",
+    "csv-parse": "^6.2.1",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.12.5",
+    "fastify-type-provider-zod": "^7.0.0",
+    "jszip": "^3.10.2",
+    "openai": "^7.25.0",
+    "openapi-types": "^12.1.3",
+    "smol-toml": "^1.9.0",
+    "tree-sitter-javascript": "^0.25.0",
+    "tree-sitter-python": "^0.25.0",
+    "tree-sitter-typescript": "^0.23.2",
+    "unpdf": "^1.8.1",
+    "web-tree-sitter": "^0.27.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.20.4",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,33 @@
+# What counts as ArmorIQ integration. Source: published SDKs armoriq-sdk / @armoriq/sdk v0.6.10.
+# ArmorIQ team: confirm this list (see docs/design.md "Open items").
+pypi_packages: [armoriq-sdk, armoriq-sdk-dev]
+npm_packages: ["@armoriq/sdk"]
+# Module prefixes: "armoriq_sdk" also matches "armoriq_sdk.integrations...";
+# "@armoriq/sdk" also matches "@armoriq/sdk/dist/integrations/google_adk".
+python_modules: [armoriq_sdk]
+js_modules: ["@armoriq/sdk"]
+# USAGE RULE: any call or `new` on an imported ArmorIQ binding (aliases tracked), or a method call on an
+# object created from one, is a usage site. known_methods only labels reports; it never gates.
+known_methods:
+  python: [ArmorIQClient, from_config, capture_plan, get_intent_token, invoke]
+  js: [ArmorIQClient, ArmorIQSession, capturePlan, getIntentToken, invoke, invokeWithPolicy, startSession,
+       delegate, verifyToken, completePlan, listMcps, loadMcp, buildPlanFromToolCalls, loadArmorIQConfig]
+env_vars: [ARMORIQ_API_KEY, ARMORIQ_USER_ID, ARMORIQ_AGENT_ID, USER_ID, AGENT_ID]
+config_files: [armoriq.yaml, armoriq.yml]
+hosts: ["armoriq.ai"]
+# Python virtualenvs are skipped automatically (any directory containing pyvenv.cfg).
+exclude_dirs: [.git, node_modules, .venv, __pycache__, .next, .turbo, site-packages, dist]
+test_path_markers: [test, tests, __tests__, spec, specs, e2e, testing]
+# Real ArmorIQ keys start with ak_live_, ak_test_ or ak_claw_ (armoriq_sdk/client.py). Values containing a
+# placeholder marker (e.g. "ak_live_your_key_here") are not treated as secrets.
+real_key_pattern: "ak_(?:live|test|claw)_[A-Za-z0-9_\\-]{8,}"
+# Whole-word tokens that mark a placeholder value; all-"x" runs and values with < or * are placeholders too.
+placeholder_markers: [your, key, here, example, placeholder, changeme, dummy, sample, redacted]
+# Other secrets that must never leave the machine (redacted in snippets sent to Jev/LLMs and stored in the DB).
+other_secret_patterns:
+  - "sk-[A-Za-z0-9_\\-]{20,}"
+  - "gh[pousr]_[A-Za-z0-9]{30,}"
+  - "github_pat_[A-Za-z0-9_]{30,}"
+  - "AKIA[0-9A-Z]{16}"
+  - "AIza[0-9A-Za-z_\\-]{35}"
+  - "xox[abprs]-[A-Za-z0-9\\-]{10,}"
