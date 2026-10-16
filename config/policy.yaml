@@ -1,0 +1,21 @@
+# Gate + routing policy (design §3.5). Routing thresholds are tuned with `hackeval calibrate`; 0.85 is fixed.
+gate:
+  require_install: true          # SDK must be declared/installed somewhere in the repo
+  test_only_usage_counts: false  # calls only inside test files do not count as application usage
+  env_required: false            # env files are optional evidence (user decision)
+  jev_pass: 0.8                  # unresolved cases pass only if Jev P(app calls SDK) >= this; else human review
+  pin_to_deadline: true          # evaluate the last commit at or before the hackathon deadline (committer date)
+missing_artifact: review         # unreachable deck/video -> needs_attention, never auto-DQ
+routing:
+  auto_accept_confidence: 0.85   # user-fixed bar: weighted mean of per-criterion Jev agreement
+  min_criterion_agreement: 0.5   # any single criterion below this -> review
+  min_sufficiency: 0.6           # Jev: "is there enough evidence to place this on the rubric?"
+  max_level_gap: 1               # |Jev expected level - LLM level| above this -> review
+  level_tolerance: 0             # agreement = Jev probability mass within ±tolerance of the LLM level
+  review_on_commits_after_deadline: true
+  flag_rules:
+    - {flag: evaluator_injection_attempt, op: ge, threshold: 0.5}
+    - {flag: claims_unsupported, op: ge, threshold: 0.7}
+    - {flag: artifacts_describe_same_project, op: le, threshold: 0.3}
+    - {flag: video_shows_this_project, op: le, threshold: 0.3}
+    - {flag: deck_is_real_pitch, op: le, threshold: 0.3}

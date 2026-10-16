@@ -1,0 +1,8 @@
+external_id,team_name,repo_url,deck,video,track,submitted_at,expected_status
+t1,Alpha,https://github.com/example/alpha,https://example.com/alpha.pdf,https://youtu.be/alpha,agents,2026-10-01T10:00:00Z,finalized
+t2,Bravo,https://github.com/example/bravo,https://example.com/bravo.pdf,https://youtu.be/bravo,agents,2026-10-01T10:00:00Z,disqualified
+t3,Charlie,https://github.com/example/charlie,https://example.com/charlie.pdf,https://youtu.be/charlie,security,2026-10-01T10:00:00Z,gate_review
+t4,Delta,https://github.com/example/delta,https://example.com/delta.pdf,https://youtu.be/delta,security,2026-10-01T10:00:00Z,needs_attention
+t5,Echo,https://github.com/example/echo,https://example.com/echo.pdf,https://youtu.be/echo,agents,2026-10-01T10:00:00Z,needs_review
+t6,Foxtrot,https://github.com/example/foxtrot,https://example.com/foxtrot.pdf,https://youtu.be/foxtrot,agents,2026-10-01T10:00:00Z,needs_attention
+t7,Golf,https://github.com/example/golf,decks/golf.pdf,,agents,2026-10-01T10:00:00Z,finalized

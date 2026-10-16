@@ -1,0 +1,66 @@
+# Placeholder rubric — replace with the organizer rubric (same schema: src/hackeval/schemas/rubric.py).
+# Levels are ordered lowest -> highest; 2-10 levels per criterion; labels unique per criterion.
+id: example
+version: "1"
+tracks: []
+criteria:
+  - id: problem_solution
+    name: Problem & solution clarity
+    description: How clearly the team states a real problem and how their solution addresses it.
+    weight: 0.20
+    sources: [deck, video]
+    levels:
+      - {label: Missing, description: No identifiable problem statement or solution.}
+      - {label: Vague, description: A problem is named but the solution's link to it is unclear.}
+      - {label: Clear, description: Problem and solution are clearly stated and connected.}
+      - {label: Compelling, description: A specific, well-evidenced problem with a convincing, targeted solution.}
+  - id: demo_quality
+    name: Working demo
+    description: Whether the video shows the product actually working end to end.
+    weight: 0.25
+    sources: [video]
+    levels:
+      - {label: Missing, description: No demo; only slides or talking.}
+      - {label: Mockup, description: Screens or mockups without real interaction.}
+      - {label: Partial, description: Some real functionality shown, with gaps or cuts.}
+      - {label: End-to-end, description: A real end-to-end flow is shown working live.}
+  - id: architecture
+    name: Architecture as presented
+    description: How well the deck and video explain the system design and agent/tool flow.
+    weight: 0.20
+    sources: [deck, video]
+    levels:
+      - {label: Missing, description: No description of how the system works.}
+      - {label: Superficial, description: Buzzwords or a box diagram without explanation.}
+      - {label: Explained, description: Components and data flow are explained coherently.}
+      - {label: Deep, description: Design decisions, trade-offs and security boundaries are explained.}
+  - id: innovation
+    name: Innovation
+    description: Novelty of the idea or approach relative to common hackathon projects.
+    weight: 0.15
+    sources: [deck, video]
+    levels:
+      - {label: Derivative, description: A common tutorial-style project.}
+      - {label: Incremental, description: A known idea with a small twist.}
+      - {label: Fresh, description: A distinctive idea or approach.}
+      - {label: Breakthrough, description: A genuinely new idea with clear potential.}
+  - id: presentation
+    name: Presentation
+    description: Clarity and polish of the deck and the video narration.
+    weight: 0.10
+    sources: [deck, video]
+    levels:
+      - {label: Poor, description: Hard to follow; missing key information.}
+      - {label: Adequate, description: Understandable with effort.}
+      - {label: Good, description: Clear structure and narration.}
+      - {label: Excellent, description: Crisp, well-paced and memorable.}
+  - id: armoriq_integration
+    name: ArmorIQ integration depth
+    description: How central ArmorIQ is to the application's runtime behaviour (from repository evidence).
+    weight: 0.10
+    sources: [repo]
+    levels:
+      - {label: Token, description: SDK called in one incidental place.}
+      - {label: Basic, description: SDK guards a single flow (e.g. one capture_plan + invoke).}
+      - {label: Integrated, description: SDK guards most agent/tool calls.}
+      - {label: Core, description: ArmorIQ intent verification is central to the architecture across flows.}
