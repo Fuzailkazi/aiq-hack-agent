@@ -1,0 +1,17 @@
+/* ArmorIQ design system: Tailwind v4 + the aq-* tokens (light + dark) bound as utilities. */
+@import "../design-system/styles/globals.css";
+@source "../design-system/primitives";
+
+/* Self-hosted Geist / Geist Mono (OFL), the system's UI and numeral faces. */
+@font-face {
+  font-family: "Geist";
+  src: url("../design-system/assets/fonts/Geist/Geist-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../design-system/assets/fonts/Geist_Mono/GeistMono-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
