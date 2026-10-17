@@ -60,6 +60,8 @@ export const ArmorIQEvidenceSchema = z.object({
   configFiles: z.array(z.string()).default([]),
   secretExposed: z.boolean().default(false),
   redactedKeys: z.array(z.string()).default([]),
+  /** Partner SDKs found in the repo (prize tracks), e.g. elevenlabs -> ["package.json", "src/voice.ts:12"]. */
+  partners: z.record(z.string(), z.array(z.string())).default({}),
 });
 export type ArmorIQEvidence = z.infer<typeof ArmorIQEvidenceSchema>;
 

@@ -80,7 +80,12 @@ export function withStageCache(deps: PipelineDeps, cache: StageCache, versions: 
           : source === "video"
             ? media.video
             : source === "form"
-              ? { answers: sub.answers, liveDemoUrl: sub.liveDemoUrl, liveDemo: media.liveDemo }
+              ? {
+                  answers: sub.answers,
+                  liveDemoUrl: sub.liveDemoUrl,
+                  liveDemo: media.liveDemo,
+                  partners: evidence?.partners ?? {},
+                }
               : evidence;
       const team = { teamName: sub.teamName, repoUrl: sub.repoUrl };
       return cache.memo(`analyze-${source}`, { versions, team, input }, ArtifactFindingsSchema, () =>

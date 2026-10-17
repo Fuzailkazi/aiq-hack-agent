@@ -44,6 +44,10 @@ npm run hackeval -- run
 - **Intake** (`config/intake.flow_state.yaml`): form timestamps are read as Asia/Kolkata; "Did you use ElevenLabs? Yes" puts a team on the `elevenlabs` track, everyone else on `main`. Names and emails are never imported.
 - **Videos:** with Gemini, YouTube links go to the model as-is (it watches them), so no download is needed. Private videos fail and go to review.
 - **Live demo:** one page load per URL (private addresses refused, cold starts retried). It shows the app is online, not that it works; the video carries that.
+- **Requirements checklist** (per team, in the UI): ArmorIQ SDK gate, ElevenLabs actually in the code (ElevenLabs track; found by manifest or import, so "used it only for the video narration" shows as a warning), demo video watchable, live demo online, X/LinkedIn post with #FlowStateHackathon, ArmorTools Pro.
+- **The agents know the form's rules:** the video analyst flags videos far outside 3 to 5 minutes; the form analyst compares partner claims with the repo scan.
+- **Free-tier Gemini:** set `HACKEVAL_LLM_CONCURRENCY=1` (video calls are large); rate limits (429), overload (503) and dropped connections are retried with backoff, and a failed run says so in plain words ("Not scored yet: the Gemini rate limit was reached").
+- **Loom/Vimeo videos** need `yt-dlp` (`brew install yt-dlp`); YouTube does not.
 
 **Commands:**
 - Setup: `init`, `rubric validate|activate`, `import`, `add`.

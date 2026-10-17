@@ -94,7 +94,12 @@ export function EvidenceViewer({
           (media?.video?.remoteUri ? (
             <p className="text-aq-sm text-aq-ink-soft">
               The model watched this video directly:{" "}
-              <a className="underline" href={media.video.remoteUri} target="_blank" rel="noreferrer">
+              <a
+                className="font-mono hover:underline"
+                href={media.video.remoteUri}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
                 {media.video.remoteUri}
               </a>
             </p>
@@ -188,10 +193,10 @@ export function EvidenceViewer({
                   Live demo check
                 </div>
                 <a
-                  className="text-aq-sm underline"
+                  className="text-aq-sm font-mono hover:underline"
                   href={media.liveDemo.url}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                 >
                   {media.liveDemo.url}
                 </a>

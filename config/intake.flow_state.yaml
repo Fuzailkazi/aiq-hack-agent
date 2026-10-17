@@ -22,3 +22,6 @@ answers:
   elevenlabs_used: Did you use ElevenLabs?
   elevenlabs_how: If yes, how did you integrate ElevenLabs? (answer only if you chose Yes above)
   feedback: "ArmorTools feedback: what worked, what did not (optional)"
+  x_post: Link to your X post tagging @ArmorIQForDevs (required unless you add a LinkedIn link below)
+  linkedin_post: Link to your LinkedIn post tagging ArmorIQ (optional if you added an X link above)
+  hashtag: "Confirm you used #FlowStateHackathon in your post"

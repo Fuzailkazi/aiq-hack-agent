@@ -1,14 +1,30 @@
-import { IconAlert, IconFile, IconHistory, IconScroll, IconShieldCheck, IconUpload } from "@shared/icons";
+import {
+  IconAlert,
+  IconChart,
+  IconClipboardCheck,
+  IconCode,
+  IconFile,
+  IconGlobe,
+  IconHistory,
+  IconLink,
+  IconPlay,
+  IconScroll,
+  IconShieldCheck,
+  IconUpload,
+} from "@shared/icons";
 import { Banner, Chip, ListRow, PageState } from "@shared/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router";
 import { api, unwrap } from "../../api/client";
+import { CheckList } from "../../shared/Checks";
 import type { Focus } from "../../shared/citations";
+import { Markdown } from "../../shared/Markdown";
 import { PageHeader } from "../../shared/PageHeader";
 import { Panel } from "../../shared/Panel";
+import { ScoreBar, trackLabel } from "../../shared/Score";
 import { StatCell } from "../../shared/StatCell";
-import { StatusPill } from "../../shared/status";
+import { STATUS, StatusPill } from "../../shared/status";
 import { AppShell } from "../../shell/AppShell";
 import { useHackathon } from "../hackathons/useHackathon";
 import { AttachForm } from "./AttachForm";
@@ -36,7 +52,7 @@ export function SubmissionDetail() {
     { label: "Hackathons", to: "/" },
     { label: hackathon.data?.hackathon.name ?? hid, to: `/h/${hid}` },
     { label: "Submissions", to: `/h/${hid}/submissions` },
-    { label: detail.data?.submission.teamName ?? "…" },
+    { label: detail.data?.submission.answers.projectName ?? detail.data?.submission.teamName ?? "…" },
   ];
 
   if (detail.isError)
@@ -57,69 +73,131 @@ export function SubmissionDetail() {
   const gate = evaluation?.gate;
   const calibration = evaluation?.calibration;
   const reviewable = (DECISIONS[status] ?? []).length > 0;
-  const unreachable = Object.entries(evaluation?.mediaUnreachable ?? {});
+  const reasons = detail.data.reasons;
+  const hasJev = (calibration?.criteria ?? []).some((c) => c.jevProbs !== null);
+  const a = submission.answers;
+  const links = [
+    { label: "Repository", href: submission.repoUrl, icon: IconCode },
+    submission.video && { label: "Demo video", href: submission.video.uri, icon: IconPlay },
+    submission.liveDemoUrl && { label: "Live demo", href: submission.liveDemoUrl, icon: IconGlobe },
+    a.xPost && { label: "X post", href: a.xPost, icon: IconLink },
+    a.linkedinPost && { label: "LinkedIn post", href: a.linkedinPost, icon: IconLink },
+  ].filter(
+    (l): l is { label: string; href: string; icon: typeof IconCode } =>
+      Boolean(l) && /^https?:\/\//.test((l as { href: string }).href),
+  );
 
   return (
     <AppShell crumbs={crumbs} hid={hid} section="submissions">
       <PageHeader
         title={
           <>
-            {submission.teamName} <StatusPill status={status} />
+            {submission.answers.projectName ?? submission.teamName} <StatusPill status={status} />
           </>
         }
         subtitle={
-          <>
-            <a
-              className="font-mono hover:underline"
-              href={submission.repoUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {submission.repoUrl.replace(/^https:\/\//, "")}
-            </a>
-            {submission.repoRef && ` · ${submission.repoRef}`}
-            {submission.track && ` · track ${submission.track}`}
-          </>
+          <span className="flex flex-col gap-2.5">
+            <span>
+              {submission.answers.projectName ? `by ${submission.teamName.trim()} · ` : ""}
+              {trackLabel(submission.track)} track · submitted{" "}
+              {new Date(submission.submittedAt).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+              {submission.repoRef && ` · branch ${submission.repoRef}`}
+            </span>
+            <span className="flex flex-wrap gap-1.5">
+              {links.map((l) => (
+                <a key={l.label} href={l.href} target="_blank" rel="noreferrer noopener">
+                  <Chip size="sm" leading={l.icon}>
+                    {l.label}
+                  </Chip>
+                </a>
+              ))}
+            </span>
+          </span>
         }
       />
       <div className="flex flex-col gap-5.5">
-        {evaluation?.scorecard && (
-          <Panel>
-            <div className="grid grid-cols-3 gap-5.5">
-              <StatCell label="Auto score" value={evaluation.autoScore} format={(n) => n.toFixed(2)} />
-              <StatCell label="Final score" value={evaluation.finalScore} format={(n) => n.toFixed(2)} />
-              <StatCell
-                label="Confidence"
-                value={calibration ? Math.round(calibration.confidence * 100) : null}
-                format={(n) => `${n}%`}
-                hint="0.85 needed to auto-accept"
-              />
-            </div>
-          </Panel>
+        {reasons.length > 0 && (
+          <Banner tone={STATUS[status].tone === "bad" ? "bad" : "warn"}>
+            <span className="block font-medium">Why this is {STATUS[status].label.toLowerCase()}:</span>
+            <ul className="flex flex-col gap-1" data-testid="status-reasons">
+              {reasons.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+            {status === "error" && evaluation?.error && (
+              <span className="text-aq-xs text-aq-ink-muted mt-1 block font-mono">
+                Technical detail: {evaluation.error.replace(/^Error:\s*/, "")}
+              </span>
+            )}
+          </Banner>
         )}
+        <div className="grid items-start gap-5.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <Panel title="Score" icon={IconChart} tone="accent">
+            {evaluation?.scorecard ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                  <StatCell
+                    label={evaluation.finalScore !== null ? "Final score" : "AI score (provisional)"}
+                    value={evaluation.finalScore ?? evaluation.autoScore}
+                    format={(n) => n.toFixed(1)}
+                    hint={
+                      evaluation.finalScore !== null
+                        ? "confirmed by a judge"
+                        : "out of 100, until a judge confirms"
+                    }
+                  />
+                  {evaluation.finalScore !== null && (
+                    <StatCell label="AI score" value={evaluation.autoScore} format={(n) => n.toFixed(1)} />
+                  )}
+                  {hasJev && (
+                    <StatCell
+                      label="Confidence"
+                      value={calibration ? Math.round(calibration.confidence * 100) : null}
+                      format={(n) => `${n}%`}
+                      hint="0.85 needed to auto-accept"
+                    />
+                  )}
+                </div>
+                {rubric && (
+                  <ul className="flex flex-col gap-2">
+                    {rubric.criteria.map((c) => {
+                      const sc = evaluation.scorecard?.scores.find((x) => x.criterionId === c.id);
+                      const pct = sc ? (100 * sc.level) / (c.levels.length - 1) : null;
+                      return (
+                        <li key={c.id} className="flex items-center justify-between gap-4">
+                          <span className="text-aq-sm text-aq-ink-soft min-w-0 truncate">
+                            {c.name} <span className="text-aq-ink-faint">· {sc?.levelLabel ?? "—"}</span>
+                          </span>
+                          <ScoreBar
+                            value={pct}
+                            size="sm"
+                            tone={pct !== null && pct >= 67 ? "good" : "accent"}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <p className="text-aq-sm text-aq-ink-muted">
+                {status === "disqualified"
+                  ? "Not scored: the team did not pass the ArmorIQ SDK gate."
+                  : "Not scored yet. Scores appear here once the AI has judged the video, demo, code and form."}
+              </p>
+            )}
+          </Panel>
+          <Panel title="Requirements" icon={IconClipboardCheck} tone="info">
+            <CheckList checks={detail.data.checks} />
+          </Panel>
+        </div>
 
         {reviewable && (
           <Panel title="Decision" icon={IconAlert} tone="warn">
             <div className="flex flex-col gap-4.5">
-              {status === "needs_review" && calibration?.reasons.length ? (
-                <Banner tone="warn">
-                  <ul className="flex flex-col gap-1">
-                    {calibration.reasons.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                </Banner>
-              ) : null}
-              {unreachable.length > 0 && (
-                <Banner tone="warn">
-                  {unreachable.map(([k, v]) => (
-                    <span key={k} className="block">
-                      {k}: {v}
-                    </span>
-                  ))}
-                </Banner>
-              )}
-              {evaluation?.error && <Banner tone="bad">{evaluation.error}</Banner>}
               <ReviewForm detail={detail.data} rubric={rubric} />
             </div>
           </Panel>
@@ -175,7 +253,7 @@ export function SubmissionDetail() {
                 </div>
               )}
               <ScorecardTable rubric={rubric} evaluation={evaluation} onFocus={setFocus} />
-              {calibration?.discrepancyNotes.length ? (
+              {hasJev && calibration?.discrepancyNotes.length ? (
                 <div className="mt-4.5">
                   <div className="text-aq-caption tracking-aq-widest text-aq-ink-muted mb-2 font-medium uppercase">
                     Where the LLM and Jev disagree
@@ -192,9 +270,7 @@ export function SubmissionDetail() {
                   <div className="text-aq-caption tracking-aq-widest text-aq-ink-muted mb-2 font-medium uppercase">
                     Feedback for the team
                   </div>
-                  <p className="text-aq-sm text-aq-ink-soft whitespace-pre-wrap">
-                    {evaluation.scorecard.feedbackMd}
-                  </p>
+                  <Markdown text={evaluation.scorecard.feedbackMd} />
                 </div>
               )}
             </Panel>

@@ -467,10 +467,19 @@ export interface paths {
                         "application/json": {
                             id: string;
                             teamName: string;
+                            projectName: string | null;
                             repoUrl: string;
                             track: string | null;
                             /** @enum {string} */
                             status: "queued" | "needs_attention" | "disqualified" | "gate_review" | "scoring" | "needs_review" | "finalized" | "stale" | "superseded" | "error";
+                            reasons: string[];
+                            checks: {
+                                id: string;
+                                label: string;
+                                /** @enum {string} */
+                                state: "pass" | "fail" | "warn" | "pending";
+                                detail: string;
+                            }[];
                             autoScore: number | null;
                             finalScore: number | null;
                             confidence: number | null;
@@ -583,6 +592,14 @@ export interface paths {
                             };
                             /** @enum {string} */
                             status: "queued" | "needs_attention" | "disqualified" | "gate_review" | "scoring" | "needs_review" | "finalized" | "stale" | "superseded" | "error";
+                            reasons: string[];
+                            checks: {
+                                id: string;
+                                label: string;
+                                /** @enum {string} */
+                                state: "pass" | "fail" | "warn" | "pending";
+                                detail: string;
+                            }[];
                             evaluation: {
                                 submissionId: string;
                                 /** @enum {string} */
@@ -647,6 +664,10 @@ export interface paths {
                                     secretExposed: boolean;
                                     /** @default [] */
                                     redactedKeys: string[];
+                                    /** @default {} */
+                                    partners: {
+                                        [key: string]: string[];
+                                    };
                                 } | null;
                                 /** @default null */
                                 gate: {

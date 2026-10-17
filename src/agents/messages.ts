@@ -75,7 +75,7 @@ export function buildAnalystParts(
       text(
         "The team's written answers from the submission form, then an automated check of their live demo URL.",
       ),
-      text(fence(`Team: ${sub.teamName}\n${redactor.redact(formSummary(sub, media))}`)),
+      text(fence(`Team: ${sub.teamName}\n${redactor.redact(formSummary(sub, media, evidence))}`)),
     ];
   }
   return [
@@ -103,7 +103,11 @@ export function repoSummary(evidence: ArmorIQEvidence | null): string {
   return redactor.redact(lines.join("\n"));
 }
 
-export function formSummary(sub: Submission, media: MediaDigest): string {
+export function formSummary(
+  sub: Submission,
+  media: MediaDigest,
+  evidence: ArmorIQEvidence | null = null,
+): string {
   const answers = Object.entries(sub.answers);
   const lines = ["Form answers (cite by key):"];
   lines.push(...(answers.length ? answers.map(([k, v]) => `[${k}]\n${v}`) : ["- none"]));
@@ -117,6 +121,14 @@ export function formSummary(sub: Submission, media: MediaDigest): string {
     if (demo.error) lines.push(`- ${demo.reachable ? "note" : "error"}: ${demo.error}`);
     if (demo.title) lines.push(`- page title: ${demo.title}`);
     if (demo.excerpt) lines.push(`- page text: ${demo.excerpt}`);
+  }
+  const partners = Object.entries(evidence?.partners ?? {});
+  if (partners.length) {
+    lines.push("", "Repository check for partner products (static scan of manifests and imports):");
+    for (const [name, hits] of partners)
+      lines.push(
+        `- ${name}: ${hits.length ? `found in ${hits.slice(0, 5).join(", ")}` : "not found in the repository"}`,
+      );
   }
   return lines.join("\n");
 }

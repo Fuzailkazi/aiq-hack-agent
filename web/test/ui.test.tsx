@@ -130,6 +130,38 @@ describe("form evidence and YouTube videos", () => {
   });
 });
 
+describe("status reasons", () => {
+  it("says why a team is disqualified, in the list and on its page", async () => {
+    const reason = "No ArmorIQ SDK install declaration and no SDK calls were found";
+    const data = submission("disqualified");
+    data.reasons = [reason];
+    mockApi({
+      "GET /api/hackathons/h": HACKATHON,
+      "GET /api/hackathons/h/submissions": [
+        {
+          id: "s1",
+          teamName: "GuardRail",
+          projectName: null,
+          checks: [],
+          repoUrl: "https://github.com/o/guardrail",
+          track: "main",
+          status: "disqualified",
+          reasons: [reason],
+          autoScore: null,
+          finalScore: null,
+          confidence: null,
+        },
+      ],
+      "GET /api/submissions/s1": data,
+    });
+    renderAt("/h/h/submissions");
+    expect((await screen.findByTestId("reason-s1")).textContent).toBe(reason);
+    fireEvent.click(screen.getByRole("link", { name: /GuardRail/ }));
+    expect((await screen.findByTestId("status-reasons")).textContent).toContain(reason);
+    expect(screen.getByText("Why this is disqualified:")).toBeTruthy();
+  });
+});
+
 describe("leaderboard", () => {
   it("ranks each track in its own panel", async () => {
     const row = (track: string | null, rank: number, teamName: string, finalScore: number) => ({
@@ -152,7 +184,8 @@ describe("leaderboard", () => {
     renderAt("/h/h/leaderboard");
     expect(await screen.findByText("Track: elevenlabs")).toBeTruthy();
     expect(screen.getByText("Track: main")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Semicolon" })).toBeTruthy();
+    expect(screen.getByText("Semicolon")).toBeTruthy();
+    expect(screen.getByText("81.00")).toBeTruthy();
   });
 });
 

@@ -3,7 +3,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { addSubmission, importCsv } from "../../intake";
 import { StatusSchema } from "../../schemas/evaluation";
-import { attachFiles, decide } from "../../service";
+import { attachFiles, checklist, decide, statusReasons } from "../../service";
 import { intakeOf } from "../../settings";
 import * as q from "../../store/queries";
 import { type ApiContext, nowIso } from "../context";
@@ -96,9 +96,12 @@ export const submissionRoutes =
             return {
               id: submission.id,
               teamName: submission.teamName,
+              projectName: submission.answers.projectName ?? null,
               repoUrl: submission.repoUrl,
               track: submission.track,
               status,
+              reasons: statusReasons(status, ev),
+              checks: checklist(submission, ev),
               autoScore: ev?.autoScore ?? null,
               finalScore: ev?.finalScore ?? null,
               confidence: ev?.calibration?.confidence ?? null,
@@ -113,7 +116,14 @@ export const submissionRoutes =
       async (req) => {
         const { submission, status } = q.getSubmission(db, req.params.id);
         const evaluation = q.getEvaluation(db, submission.id);
-        return { submission, status, evaluation, calibration: evaluation?.calibration ?? null };
+        return {
+          submission,
+          status,
+          reasons: statusReasons(status, evaluation),
+          checks: checklist(submission, evaluation),
+          evaluation,
+          calibration: evaluation?.calibration ?? null,
+        };
       },
     );
 
