@@ -266,7 +266,7 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
 
   program
     .command("leaderboard")
-    .description("Ranked finalized submissions.")
+    .description("Ranked finalized submissions, ranked separately per track.")
     .addOption(hackathonOption())
     .addOption(
       new Option("--format <format>", "output format").choices(["table", "csv", "json"]).default("table"),
@@ -275,11 +275,16 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
       const rows = buildLeaderboard(database(), hackathonOf(o));
       if (o.format === "csv") out += leaderboardCsv(rows);
       else if (o.format === "json") print(JSON.stringify(rows, null, 2));
-      else
-        for (const r of rows)
+      else {
+        const tracked = rows.some((r) => r.track !== null);
+        rows.forEach((r, i) => {
+          if (tracked && (i === 0 || rows[i - 1].track !== r.track))
+            print(`${i ? "\n" : ""}Track: ${r.track ?? "(none)"}`);
           print(
             `${String(r.rank).padStart(3)}. ${r.finalScore.toFixed(2).padStart(6)}  ${r.teamName}${r.overridden ? "  (override)" : ""}`,
           );
+        });
+      }
     });
 
   program

@@ -4,8 +4,10 @@ Automated judging for the ArmorIQ hackathon, in TypeScript (Node 22, Fastify, Re
 
 The pipeline:
 1. Disqualifies teams that do not both **install** and **call** the ArmorIQ SDK. This is decided by static scanning; submission code is never run.
-2. Scores the pitch deck and the demo video against your rubric with LLM agents (Gemini or OpenAI).
-3. Gets an independent Jev second opinion per criterion. A result reaches the leaderboard only when confidence is ≥ 0.85 and no rule fires; everything else goes to a human with the reasons.
+2. Scores the submission against your rubric with LLM agents (Gemini or OpenAI): the pitch deck, the demo video, the depth of the ArmorIQ integration in the repo, and the team's form answers plus a check that their live demo loads.
+3. Gets an independent Jev second opinion per criterion. A result reaches the leaderboard only when confidence is ≥ 0.85 and no rule fires; everything else goes to a human with the reasons. With `HACKEVAL_SECOND_OPINION=none` there is no Jev: the LLM scores and a human reviews every result.
+
+The leaderboard ranks each track on its own (e.g. a separate ElevenLabs prize).
 
 - **Runbook and code walkthrough:** [`docs/runbook.md`](docs/runbook.md)
 - **Design:** [`docs/design.md`](docs/design.md)
@@ -25,6 +27,24 @@ npm run hackeval -- serve                    # UI + API on http://127.0.0.1:8000
 
 Or use Docker: `docker compose up -d`.
 
+## Flow State Hackathon
+
+Submissions come from the Google Form; download the Responses sheet as CSV.
+
+```bash
+export HACKEVAL_INTAKE=intake.flow_state.yaml HACKEVAL_SECOND_OPINION=none HACKEVAL_HACKATHON=flowstate
+npm run hackeval -- init flowstate --deadline 2026-10-20T18:29:00Z   # 23:59 IST
+npm run hackeval -- rubric activate config/rubrics/flow_state.yaml
+npm run hackeval -- import responses.csv
+npm run hackeval -- run
+```
+
+- **Gate:** no `@armoriq/sdk` / `armoriq-sdk` install plus a real call means disqualified; nothing else runs.
+- **Rubric** (`config/rubrics/flow_state.yaml`): demo video 40, live demo 40, ArmorIQ integration depth 20, takeaways 15, ArmorTools Pro 5 (normalized to 0-100).
+- **Intake** (`config/intake.flow_state.yaml`): form timestamps are read as Asia/Kolkata; "Did you use ElevenLabs? Yes" puts a team on the `elevenlabs` track, everyone else on `main`. Names and emails are never imported.
+- **Videos:** with Gemini, YouTube links go to the model as-is (it watches them), so no download is needed. Private videos fail and go to review.
+- **Live demo:** one page load per URL (private addresses refused, cold starts retried). It shows the app is online, not that it works; the video carries that.
+
 **Commands:**
 - Setup: `init`, `rubric validate|activate`, `import`, `add`.
 - Running: `run [--phase gate|score] [--retry]`, `status`.
@@ -32,7 +52,7 @@ Or use Docker: `docker compose up -d`.
 - Routing and results: `reroute`, `calibrate <gold.csv>`, `leaderboard`.
 - Other: `models`, `serve`.
 
-**System tools:** `git`, `ffmpeg`/`ffprobe`, LibreOffice (`soffice`), poppler (`pdftoppm`); optional `yt-dlp` for YouTube/Loom links.
+**System tools:** `git`, `ffmpeg`/`ffprobe`, LibreOffice (`soffice`), poppler (`pdftoppm`); optional `yt-dlp` for Loom/Vimeo links (and YouTube with OpenAI).
 
 **Development:**
 - `npm test`: offline suite.

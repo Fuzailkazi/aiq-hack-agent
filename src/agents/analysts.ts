@@ -17,8 +17,9 @@ const PROMPTS: Record<Source, PromptName> = {
   deck: "deck_analyst",
   video: "video_analyst",
   repo: "integration_analyst",
+  form: "form_analyst",
 };
-const ROLES: Record<Source, Role> = { deck: "deck", video: "video", repo: "integration" };
+const ROLES: Record<Source, Role> = { deck: "deck", video: "video", repo: "integration", form: "form" };
 
 /** A callable instruction bypasses ADK's {state} templating, so rubric text with braces is safe. */
 const instruction = (text: string) => () => text;
@@ -77,9 +78,12 @@ export class AdkAnalyze {
         claims: [],
         redFlags: [],
       };
-    const absent = { deck: media.deck === null, video: media.video === null, repo: evidence === null }[
-      source
-    ];
+    const absent = {
+      deck: media.deck === null,
+      video: media.video === null,
+      repo: evidence === null,
+      form: Object.keys(sub.answers).length === 0 && !sub.liveDemoUrl,
+    }[source];
     if (absent) {
       return {
         source,

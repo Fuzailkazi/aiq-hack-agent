@@ -1,20 +1,25 @@
-/** What the agents saw: slides (images + text), the video with its timestamped transcript, and repo usage sites. */
+/**
+ * What the agents saw: slides (images + text), the video with its timestamped transcript (or the link the model
+ * watched), repo usage sites, and the team's form answers with the live demo check.
+ */
 import { ListRow, PageState, SegmentedControl } from "@shared/ui";
 import { useEffect, useRef, useState } from "react";
 import type { Evaluation } from "../../api/client";
 import { type Focus, mmss } from "../../shared/citations";
 
-type Tab = "deck" | "video" | "repo";
+type Tab = "deck" | "video" | "repo" | "form";
 const ring = (on: boolean) => (on ? "ring-aq-accent ring-2" : "");
 
 export function EvidenceViewer({
   submissionId,
   evaluation,
   focus,
+  answers = {},
 }: {
   submissionId: string;
   evaluation: Evaluation;
   focus: Focus;
+  answers?: Record<string, string>;
 }) {
   const media = evaluation.media;
   const [tab, setTab] = useState<Tab>(media?.deck ? "deck" : media?.video ? "video" : "repo");
@@ -24,6 +29,7 @@ export function EvidenceViewer({
   useEffect(() => {
     if (focus.kind === "slide") setTab("deck");
     if (focus.kind === "code") setTab("repo");
+    if (focus.kind === "form") setTab("form");
     if (focus.kind === "time") {
       setTab("video");
       if (video.current) {
@@ -49,6 +55,7 @@ export function EvidenceViewer({
           { value: "deck", label: "Deck" },
           { value: "video", label: "Video" },
           { value: "repo", label: "Repository" },
+          { value: "form", label: "Form" },
         ]}
       />
       <div className="flex max-h-screen flex-col gap-3 overflow-y-auto pr-1" ref={container}>
@@ -84,7 +91,14 @@ export function EvidenceViewer({
             <PageState state="empty" headline="No deck" />
           ))}
         {tab === "video" &&
-          (media?.video ? (
+          (media?.video?.remoteUri ? (
+            <p className="text-aq-sm text-aq-ink-soft">
+              The model watched this video directly:{" "}
+              <a className="underline" href={media.video.remoteUri} target="_blank" rel="noreferrer">
+                {media.video.remoteUri}
+              </a>
+            </p>
+          ) : media?.video ? (
             <>
               {/* biome-ignore lint/a11y/useMediaCaption: the transcript below is the caption track */}
               <video
@@ -166,6 +180,46 @@ export function EvidenceViewer({
           ) : (
             <PageState state="empty" headline="No repository evidence" />
           ))}
+        {tab === "form" && (
+          <>
+            {media?.liveDemo ? (
+              <div className="border-aq-border bg-aq-surface rounded-lg border p-3" data-testid="live-demo">
+                <div className="text-aq-caption tracking-aq-widest text-aq-ink-muted mb-1 font-medium uppercase">
+                  Live demo check
+                </div>
+                <a
+                  className="text-aq-sm underline"
+                  href={media.liveDemo.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {media.liveDemo.url}
+                </a>
+                <p className="text-aq-sm text-aq-ink-soft mt-1">
+                  {media.liveDemo.reachable
+                    ? "Reachable"
+                    : `Unreachable: ${media.liveDemo.error ?? "unknown error"}`}
+                  {media.liveDemo.status ? ` (HTTP ${media.liveDemo.status})` : ""}
+                  {media.liveDemo.title ? ` · ${media.liveDemo.title}` : ""}
+                </p>
+              </div>
+            ) : (
+              <p className="text-aq-sm text-aq-ink-muted">No live demo URL was checked.</p>
+            )}
+            {Object.keys(answers).length ? (
+              Object.entries(answers).map(([key, value]) => (
+                <div key={key} className="border-aq-border bg-aq-surface rounded-lg border p-3">
+                  <div className="text-aq-caption tracking-aq-widest text-aq-ink-muted mb-1 font-medium uppercase">
+                    {key}
+                  </div>
+                  <p className="text-aq-sm text-aq-ink-soft whitespace-pre-wrap">{value}</p>
+                </div>
+              ))
+            ) : (
+              <PageState state="empty" headline="No form answers" />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

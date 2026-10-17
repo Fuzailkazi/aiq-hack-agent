@@ -113,18 +113,106 @@ export function repoRefOf(value: string): string | null {
   return ref && safe ? ref : null;
 }
 
-/** ISO-8601 with an explicit offset; naive times are rejected rather than guessed as UTC. */
+/** "10/14/2026 12:26:21" (Google Forms, US order) or "2026-10-14 12:26:21" / "2026-10-14T12:26:21". */
+const NAIVE_US = /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+const NAIVE_ISO = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/;
+
+/** Minutes east of UTC for `zone` at the given UTC instant. */
+function zoneOffsetMinutes(zone: string, utcMs: number): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+      .formatToParts(new Date(utcMs))
+      .map((p) => [p.type, p.value]),
+  );
+  const asUtc = Date.UTC(
+    +parts.year,
+    +parts.month - 1,
+    +parts.day,
+    +parts.hour,
+    +parts.minute,
+    +parts.second,
+  );
+  return Math.round((asUtc - utcMs) / 60_000);
+}
+
+/** A wall-clock time in `zone` as ISO-8601 UTC, or null when `value` is not a recognized naive format. */
+export function zonedToIso(value: string, zone: string): string | null {
+  let y: number, mo: number, d: number, h: number, mi: number, s: number;
+  const us = NAIVE_US.exec(value);
+  const iso = NAIVE_ISO.exec(value);
+  if (us) [mo, d, y, h, mi, s] = [+us[1], +us[2], +us[3], +us[4], +us[5], +(us[6] ?? 0)];
+  else if (iso) [y, mo, d, h, mi, s] = [+iso[1], +iso[2], +iso[3], +iso[4], +iso[5], +(iso[6] ?? 0)];
+  else return null;
+  const wall = Date.UTC(y, mo - 1, d, h, mi, s);
+  const check = new Date(wall);
+  if (check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d || h > 23 || mi > 59 || s > 59) return null;
+  // Two passes settle the offset across a DST change.
+  let utc = wall - zoneOffsetMinutes(zone, wall) * 60_000;
+  utc = wall - zoneOffsetMinutes(zone, utc) * 60_000;
+  return new Date(utc).toISOString().replace(/\.000Z$/, "Z");
+}
+
+/** Throws for an unknown IANA zone name. */
+export function assertTimezone(zone: string): void {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone });
+  } catch {
+    throw new q.InputError(`unknown timezone '${zone}' (use an IANA name such as Asia/Kolkata)`);
+  }
+}
+
+/**
+ * ISO-8601 with an explicit offset. A naive time is read in `timezone` when one is configured, and rejected
+ * otherwise rather than guessed as UTC.
+ */
 export function parseTimestamp(
   value: string | null | undefined,
   fallback: string,
   fieldName = "submitted_at",
+  timezone: string | null = null,
 ): string {
   const v = (value ?? "").trim();
   if (!v) return fallback;
-  if (!Timestamp.safeParse(v).success) {
-    throw new q.InputError(`${fieldName} must include a timezone offset (e.g. 2026-10-01T10:00:00Z)`);
+  if (Timestamp.safeParse(v).success) return v;
+  const zoned = timezone ? zonedToIso(v, timezone) : null;
+  if (zoned) return zoned;
+  throw new q.InputError(
+    timezone
+      ? `${fieldName} '${v}' is not a recognized date and time (e.g. 10/14/2026 12:26:21 or 2026-10-01T10:00:00Z)`
+      : `${fieldName} must include a timezone offset (e.g. 2026-10-01T10:00:00Z), or set timezone in intake.yaml`,
+  );
+}
+
+/** The track for a row: a column read as-is, or a rule mapping another column's value to a track. */
+export function trackOf(
+  mapping: IntakeMapping["track"],
+  cell: (column: string) => string | null,
+): string | null {
+  if (mapping === null) return null;
+  if (typeof mapping === "string") return cell(mapping);
+  const value = (cell(mapping.column) ?? "").trim().toLowerCase();
+  for (const [match, track] of Object.entries(mapping.values))
+    if (match.trim().toLowerCase() === value) return track;
+  return mapping.default;
+}
+
+/** A live demo link: http(s) URLs only (anything else is dropped, not an import error). */
+export function liveDemoOf(value: string | null): string | null {
+  if (!value || !URL_RE.test(value)) return null;
+  try {
+    return new URL(value).toString();
+  } catch {
+    return null;
   }
-  return v;
 }
 
 export function importCsv(
@@ -151,6 +239,7 @@ export function importCsv(
     relax_column_count: true,
     info: true,
   }) as { record: Record<string, string>; info: { lines: number } }[];
+  if (mapping.timezone) assertTimezone(mapping.timezone);
   const headers = new Set(rows.length ? Object.keys(rows[0].record) : readHeader(csvPath));
   const missing = [mapping.teamName, mapping.repoUrl].filter((c) => !headers.has(c));
   if (missing.length) throw new q.InputError(`CSV is missing required column(s): ${missing.join(", ")}`);
@@ -218,17 +307,24 @@ function rowToSubmission(
   const team = cell(m.teamName);
   const repo = cell(m.repoUrl);
   if (!team || !repo) throw new Error("team_name and repo_url are required");
+  const answers: Record<string, string> = {};
+  for (const [key, column] of Object.entries(m.answers)) {
+    const value = cell(column);
+    if (value) answers[key] = value;
+  }
   return SubmissionSchema.parse({
     id: q.newSubmissionId(),
     hackathonId,
     externalId: cell(m.externalId),
     teamName: team,
-    track: cell(m.track),
+    track: trackOf(m.track, cell),
     repoUrl: canonicalRepoUrl(repo),
     repoRef: repoRefOf(repo),
     deck: artifactFromCell("deck", cell(m.deck), baseDir, { confineToBase: true }),
     video: artifactFromCell("video", cell(m.video), baseDir, { confineToBase: true }),
-    submittedAt: parseTimestamp(cell(m.submittedAt), now),
+    liveDemoUrl: liveDemoOf(cell(m.liveDemo)),
+    answers,
+    submittedAt: parseTimestamp(cell(m.submittedAt), now, "submitted_at", m.timezone),
   });
 }
 

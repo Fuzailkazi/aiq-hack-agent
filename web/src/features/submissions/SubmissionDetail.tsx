@@ -199,7 +199,12 @@ export function SubmissionDetail() {
               )}
             </Panel>
             <Panel title="Evidence" icon={IconFile} tone="info" className="xl:col-span-2">
-              <EvidenceViewer submissionId={submission.id} evaluation={evaluation} focus={focus} />
+              <EvidenceViewer
+                submissionId={submission.id}
+                evaluation={evaluation}
+                focus={focus}
+                answers={submission.answers}
+              />
             </Panel>
           </div>
         )}

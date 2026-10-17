@@ -102,6 +102,60 @@ describe("submission detail", () => {
   });
 });
 
+describe("form evidence and YouTube videos", () => {
+  it("shows the form answers, the live demo check, and the link the model watched", async () => {
+    const data = submission("needs_review");
+    Object.assign(data.submission, {
+      answers: { howArmoriq: "Every tool call goes through invokeWithPolicy." },
+    });
+    Object.assign(data.evaluation.media, {
+      video: { ...data.evaluation.media.video, remoteUri: "https://www.youtube.com/watch?v=abcdefghijk" },
+      liveDemo: {
+        url: "https://demo.example.app/",
+        reachable: false,
+        status: 502,
+        finalUrl: null,
+        title: "",
+        excerpt: "",
+        error: "HTTP 502",
+      },
+    });
+    mockApi({ "GET /api/submissions/s1": data, "GET /api/hackathons/h": HACKATHON });
+    renderAt("/s/s1");
+    fireEvent.click(await screen.findByRole("radio", { name: "Video" }));
+    expect(screen.getByRole("link", { name: "https://www.youtube.com/watch?v=abcdefghijk" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "Form" }));
+    expect(screen.getByText("Every tool call goes through invokeWithPolicy.")).toBeTruthy();
+    expect(within(screen.getByTestId("live-demo")).getByText(/Unreachable: HTTP 502/)).toBeTruthy();
+  });
+});
+
+describe("leaderboard", () => {
+  it("ranks each track in its own panel", async () => {
+    const row = (track: string | null, rank: number, teamName: string, finalScore: number) => ({
+      rank,
+      track,
+      submissionId: teamName.toLowerCase(),
+      teamName,
+      finalScore,
+      autoScore: finalScore,
+      overridden: false,
+    });
+    mockApi({
+      "GET /api/hackathons/h": HACKATHON,
+      "GET /api/hackathons/h/leaderboard": [
+        row("elevenlabs", 1, "Semicolon", 81),
+        row("main", 1, "RepoSentry", 90),
+        row("main", 2, "Dune", 70),
+      ],
+    });
+    renderAt("/h/h/leaderboard");
+    expect(await screen.findByText("Track: elevenlabs")).toBeTruthy();
+    expect(screen.getByText("Track: main")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Semicolon" })).toBeTruthy();
+  });
+});
+
 describe("dashboard", () => {
   it("starts a run and follows it to completion", async () => {
     let polls = 0;

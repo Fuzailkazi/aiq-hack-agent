@@ -40,7 +40,12 @@ describe("scoring workflow", () => {
   it("runs analysts in parallel, joins, synthesizes and calibrates", async () => {
     const deps = fakeDeps(rubric, policy, {});
     const state = await new WorkflowRunner(buildScoringWorkflow(deps)).run(initial("u"));
-    expect((state.findings as { source: string }[]).map((f) => f.source)).toEqual(["deck", "video", "repo"]);
+    expect((state.findings as { source: string }[]).map((f) => f.source)).toEqual([
+      "deck",
+      "video",
+      "repo",
+      "form",
+    ]);
     expect(state.calibration).toMatchObject({ route: "accept", autoScore: 100 });
   });
 

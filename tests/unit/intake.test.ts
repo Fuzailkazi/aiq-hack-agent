@@ -87,7 +87,7 @@ describe("CSV import", () => {
       NOW,
     );
     expect(report.errors).toEqual([
-      "row 2: submitted_at must include a timezone offset (e.g. 2026-10-01T10:00:00Z)",
+      "row 2: submitted_at must include a timezone offset (e.g. 2026-10-01T10:00:00Z), or set timezone in intake.yaml",
     ]);
   });
 

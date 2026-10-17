@@ -24,6 +24,10 @@ export const SubmissionSchema = z.object({
   repoRef: z.string().nullable().default(null),
   deck: ArtifactRefSchema.nullable().default(null),
   video: ArtifactRefSchema.nullable().default(null),
+  /** A deployed app the team links to; checked for reachability, never logged into. */
+  liveDemoUrl: z.string().nullable().default(null),
+  /** Free-text form answers (key -> answer), judged by the form analyst. */
+  answers: z.record(z.string(), z.string()).default({}),
   submittedAt: Timestamp,
   revision: z.number().int().default(1),
 });
@@ -52,4 +56,6 @@ export const contentKey = (s: Submission): string =>
     s.repoRef,
     s.deck?.uri ?? null,
     s.video?.uri ?? null,
+    s.liveDemoUrl,
+    Object.entries(s.answers).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   ]);

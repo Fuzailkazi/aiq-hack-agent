@@ -37,7 +37,12 @@ export const claimsQuestions = (): Record<string, JevQuestion> => ({
 });
 
 const redactor = new SecretRedactor();
-const LABEL: Record<Source, string> = { deck: "Deck", video: "Video transcript", repo: "Repository" };
+const LABEL: Record<Source, string> = {
+  deck: "Deck",
+  video: "Video transcript",
+  repo: "Repository",
+  form: "Live demo check",
+};
 
 /** Raw text per source; `cited` restricts deck and video to what the scorecard cited (repo stays whole: it is small). */
 function sourceText(
@@ -47,6 +52,20 @@ function sourceText(
   cited: Citation[] | null,
 ): string {
   if (source === "repo") return repoSummary(evidence);
+  if (source === "form") {
+    // Free-text form answers stay with the LLM judge; Jev sees only the automated live demo check.
+    const demo = media.liveDemo;
+    if (!demo) return "(no live demo URL checked)";
+    return [
+      `url: ${demo.url}`,
+      `reachable: ${demo.reachable ? "yes" : "no"}${demo.status ? ` (HTTP ${demo.status})` : ""}`,
+      demo.error ? `error: ${demo.error}` : "",
+      demo.title ? `page title: ${demo.title}` : "",
+      demo.excerpt ? `page text: ${demo.excerpt}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
   if (source === "deck") {
     if (!media.deck) return "(no deck submitted)";
     if (!cited) return deckText(media.deck);
@@ -54,6 +73,8 @@ function sourceText(
     return deckText({ ...media.deck, slides: media.deck.slides.filter((s) => pages.has(s.index)) });
   }
   if (!media.video) return "(no video submitted)";
+  if (media.video.remoteUri)
+    return "(the video was watched directly by the LLM judge; no transcript is available)";
   if (!media.video.transcript.length) return "(the video has no speech)";
   if (!cited) return transcriptText(media.video);
   const spans = citedSpans(cited);

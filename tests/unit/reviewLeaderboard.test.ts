@@ -138,14 +138,48 @@ describe("leaderboard", () => {
       [2, "Charlie", 66.67],
     ]);
     expect(leaderboardCsv(rows).split("\n")[0]).toBe(
-      "rank,submission_id,team_name,final_score,auto_score,overridden",
+      "rank,submission_id,team_name,final_score,auto_score,overridden,track",
     );
+  });
+
+  it("ranks each track on its own", () => {
+    for (const [id, track] of [
+      ["e", "elevenlabs"],
+      ["f", "elevenlabs"],
+    ]) {
+      q.upsertSubmission(
+        db,
+        SubmissionSchema.parse({
+          id,
+          hackathonId: "h",
+          externalId: id,
+          teamName: `Team ${id}`,
+          track,
+          repoUrl: `https://github.com/o/${id}`,
+          submittedAt: T0,
+        }),
+        null,
+      );
+    }
+    q.saveEvaluation(db, scored("a", 2, "finalized"));
+    q.saveEvaluation(db, scored("b", 3, "finalized"));
+    q.saveEvaluation(db, scored("e", 1, "finalized"));
+    q.saveEvaluation(db, scored("f", 3, "finalized"));
+    const rows = buildLeaderboard(db, "h");
+    expect(rows.map((r) => [r.track, r.rank, r.teamName])).toEqual([
+      [null, 1, "Bravo"],
+      [null, 2, "Alpha"],
+      ["elevenlabs", 1, "Team f"],
+      ["elevenlabs", 2, "Team e"],
+    ]);
+    expect(leaderboardCsv(rows).trim().split("\n").at(-1)?.endsWith(",elevenlabs")).toBe(true);
   });
 
   it("neutralizes spreadsheet formulas in team names", () => {
     const csv = leaderboardCsv([
       {
         rank: 1,
+        track: null,
         submissionId: "a",
         teamName: '=HYPERLINK("http://x")',
         finalScore: 90,

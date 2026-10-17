@@ -49,6 +49,15 @@ export function buildAnalystParts(
   if (source === "video") {
     const video = media.video;
     if (!video) throw new Error("no video to analyze");
+    if (video.remoteUri) {
+      return [
+        text(
+          "The team's demo video is attached as a link. Watch all of it (picture and sound); cite moments as mm:ss.",
+        ),
+        text(fence(`Team: ${sub.teamName}`)),
+        { fileData: { fileUri: video.remoteUri, mimeType: "video/*" } },
+      ];
+    }
     let intro = `Video, ${mmss(video.durationS)} long. Timestamped transcript (mm:ss) and keyframes follow.`;
     if (!video.hasSpeech) intro += " No speech was detected.";
     const parts: Part[] = [
@@ -60,6 +69,14 @@ export function buildAnalystParts(
       if (img) parts.push(text(`Frame at ${mmss(frame.tS)}:`), img);
     }
     return parts;
+  }
+  if (source === "form") {
+    return [
+      text(
+        "The team's written answers from the submission form, then an automated check of their live demo URL.",
+      ),
+      text(fence(`Team: ${sub.teamName}\n${redactor.redact(formSummary(sub, media))}`)),
+    ];
   }
   return [
     text(`ArmorIQ integration evidence from a static scan of the team's repository (${sub.repoUrl}).`),
@@ -84,6 +101,24 @@ export function repoSummary(evidence: ArmorIQEvidence | null): string {
   if (evidence.configFiles.length) lines.push(`ArmorIQ config files: ${evidence.configFiles.join(", ")}`);
   if (evidence.secretExposed) lines.push("An ArmorIQ API key is committed to the repository (redacted).");
   return redactor.redact(lines.join("\n"));
+}
+
+export function formSummary(sub: Submission, media: MediaDigest): string {
+  const answers = Object.entries(sub.answers);
+  const lines = ["Form answers (cite by key):"];
+  lines.push(...(answers.length ? answers.map(([k, v]) => `[${k}]\n${v}`) : ["- none"]));
+  const demo = media.liveDemo;
+  lines.push("", "Live demo check (one automated page load; nothing was clicked or logged into):");
+  if (!demo) lines.push(sub.liveDemoUrl ? "- not checked" : "- no live demo URL was submitted");
+  else {
+    lines.push(`- url: ${demo.url}`);
+    lines.push(`- reachable: ${demo.reachable ? "yes" : "no"}${demo.status ? ` (HTTP ${demo.status})` : ""}`);
+    if (demo.finalUrl && demo.finalUrl !== demo.url) lines.push(`- redirected to: ${demo.finalUrl}`);
+    if (demo.error) lines.push(`- ${demo.reachable ? "note" : "error"}: ${demo.error}`);
+    if (demo.title) lines.push(`- page title: ${demo.title}`);
+    if (demo.excerpt) lines.push(`- page text: ${demo.excerpt}`);
+  }
+  return lines.join("\n");
 }
 
 export function buildSynthesisParts(

@@ -1,0 +1,24 @@
+# Flow State Hackathon Google Form (Responses sheet, File > Download > CSV). Select with HACKEVAL_INTAKE=intake.flow_state.yaml.
+# Our field -> CSV column header.
+team_name: Team name
+repo_url: GitHub repo URL for the project
+deck: null
+video: Demo video URL (3 to 5 minutes; YouTube, Loom or Vimeo link)
+live_demo: Live demo URL
+# ElevenLabs projects compete for their own prize, so they get their own track and leaderboard.
+track:
+  column: Did you use ElevenLabs?
+  values: {"Yes": elevenlabs}
+  default: main
+external_id: null
+submitted_at: Timestamp
+# Google Forms writes "10/14/2026 12:26:21" in the sheet's timezone (File > Settings).
+timezone: Asia/Kolkata
+# Answers the form analyst reads (our key -> column). Names and emails are deliberately left out.
+answers:
+  project_name: Project name
+  armortools_pro: Have you subscribed to the ArmorTools Pro plan for each member?
+  how_armoriq: How did you use ArmorIQ?
+  elevenlabs_used: Did you use ElevenLabs?
+  elevenlabs_how: If yes, how did you integrate ElevenLabs? (answer only if you chose Yes above)
+  feedback: "ArmorTools feedback: what worked, what did not (optional)"

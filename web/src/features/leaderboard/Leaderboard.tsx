@@ -9,6 +9,19 @@ import { score } from "../../shared/status";
 import { AppShell } from "../../shell/AppShell";
 import { useHackathon } from "../hackathons/useHackathon";
 
+type Row = { track: string | null; submissionId: string };
+
+/** Rows arrive sorted by track; each track (e.g. the ElevenLabs prize) is ranked and shown on its own. */
+function byTrack<R extends Row>(rows: R[]): [string | null, R[]][] {
+  const groups: [string | null, R[]][] = [];
+  for (const row of rows) {
+    const last = groups.at(-1);
+    if (last && last[0] === row.track) last[1].push(row);
+    else groups.push([row.track, [row]]);
+  }
+  return groups;
+}
+
 export function Leaderboard() {
   const hid = useParams().hid ?? "";
   const hackathon = useHackathon(hid);
@@ -29,7 +42,7 @@ export function Leaderboard() {
     >
       <PageHeader
         title="Leaderboard"
-        subtitle="Finalized results under the active rubric. A judge's override beats the auto score."
+        subtitle="Finalized results under the active rubric, ranked per track. A judge's override beats the auto score."
         actions={
           <Button
             variant="secondary"
@@ -42,45 +55,58 @@ export function Leaderboard() {
           </Button>
         }
       />
-      <Panel title="Ranking" icon={IconChart} tone="good" count={rows.data?.length} flush>
-        {rows.isLoading ? (
+      {rows.isLoading ? (
+        <Panel title="Ranking" icon={IconChart} tone="good" flush>
           <PageState state="loading" headline="Loading the leaderboard" />
-        ) : rows.data?.length ? (
-          <div className="divide-aq-border divide-y">
-            {rows.data.map((r) => (
-              <ListRow
-                key={r.submissionId}
-                asCard={false}
-                leading={
-                  <span className="bg-aq-zebra text-aq-ink text-aq-sm flex size-8 items-center justify-center rounded-md font-mono font-semibold">
-                    {r.rank}
-                  </span>
-                }
-                title={
-                  <Link to={`/s/${r.submissionId}`} className="hover:underline">
-                    {r.teamName}
-                  </Link>
-                }
-                meta={`auto score ${score(r.autoScore)}`}
-                trailing={
-                  <span className="flex items-center gap-3">
-                    {r.overridden && (
-                      <Chip size="sm" tone="info">
-                        Judge override
-                      </Chip>
-                    )}
-                    <span className="text-aq-stat tracking-aq-tight text-aq-ink font-mono font-medium">
-                      {r.finalScore.toFixed(2)}
+        </Panel>
+      ) : rows.data?.length ? (
+        byTrack(rows.data).map(([track, trackRows]) => (
+          <Panel
+            key={track ?? ""}
+            title={track ? `Track: ${track}` : "Ranking"}
+            icon={IconChart}
+            tone="good"
+            count={trackRows.length}
+            flush
+          >
+            <div className="divide-aq-border divide-y">
+              {trackRows.map((r) => (
+                <ListRow
+                  key={r.submissionId}
+                  asCard={false}
+                  leading={
+                    <span className="bg-aq-zebra text-aq-ink text-aq-sm flex size-8 items-center justify-center rounded-md font-mono font-semibold">
+                      {r.rank}
                     </span>
-                  </span>
-                }
-              />
-            ))}
-          </div>
-        ) : (
+                  }
+                  title={
+                    <Link to={`/s/${r.submissionId}`} className="hover:underline">
+                      {r.teamName}
+                    </Link>
+                  }
+                  meta={`auto score ${score(r.autoScore)}`}
+                  trailing={
+                    <span className="flex items-center gap-3">
+                      {r.overridden && (
+                        <Chip size="sm" tone="info">
+                          Judge override
+                        </Chip>
+                      )}
+                      <span className="text-aq-stat tracking-aq-tight text-aq-ink font-mono font-medium">
+                        {r.finalScore.toFixed(2)}
+                      </span>
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          </Panel>
+        ))
+      ) : (
+        <Panel title="Ranking" icon={IconChart} tone="good" flush>
           <PageState state="empty" icon={IconChart} headline="No finalized submissions yet" />
-        )}
-      </Panel>
+        </Panel>
+      )}
     </AppShell>
   );
 }

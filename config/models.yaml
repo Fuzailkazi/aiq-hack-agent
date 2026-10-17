@@ -5,12 +5,14 @@ gemini:
   deck: gemini-3.5-flash
   video: gemini-3.5-flash
   integration: gemini-3.5-flash
+  form: gemini-3.5-flash
   synthesis: gemini-3.5-flash
   transcribe: gemini-3.5-flash
 openai:
   deck: gpt-5-mini
   video: gpt-5-mini
   integration: gpt-5-mini
+  form: gpt-5-mini
   synthesis: gpt-5
   transcribe: whisper-1
 # Optional prices for cost estimates in `hackeval status` (left empty: fill in from your accounts), e.g.

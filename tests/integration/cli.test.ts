@@ -66,12 +66,17 @@ describe("hackeval CLI", () => {
     const rerouted = JSON.parse(await ok("reroute"));
     expect(rerouted.changed).toEqual([]);
     expect(rerouted.skipped).toEqual([expect.stringContaining("decided by a human reviewer")]);
-    const teams = (await ok("leaderboard", "--format", "csv"))
+    const lines = (await ok("leaderboard", "--format", "csv"))
       .trim()
       .split("\n")
       .slice(1)
-      .map((l) => l.split(",")[2]);
-    expect(teams.slice(0, 2)).toEqual(["Alpha", "Charlie"]);
+      .map((l) => l.split(","));
+    const teams = lines.map((l) => l[2]);
+    // Each track has its own winner.
+    expect(lines.filter((l) => l[0] === "1").map((l) => [l[6], l[2]])).toEqual([
+      ["agents", "Alpha"],
+      ["security", "Charlie"],
+    ]);
     expect(teams).toEqual(expect.arrayContaining(["Echo", "Golf"]));
   });
 

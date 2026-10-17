@@ -101,12 +101,31 @@ export const VideoDigestSchema = z.object({
   keyframes: z.array(KeyframeSchema),
   /** Set when only the first part of a long video was analyzed (keyframes and transcript stop here). */
   analyzedUntilS: z.number().nullable().default(null),
+  /**
+   * A public video link the model watches directly (Gemini reads YouTube URLs), instead of a downloaded file.
+   * Transcript and keyframes are empty and durationS is 0 (unknown) in that case.
+   */
+  remoteUri: z.string().nullable().default(null),
 });
 export type VideoDigest = z.infer<typeof VideoDigestSchema>;
+
+/** One fetch of the team's live demo URL. The app is never logged into or interacted with. */
+export const LiveDemoCheckSchema = z.object({
+  url: z.string(),
+  reachable: z.boolean(),
+  status: z.number().int().nullable().default(null),
+  finalUrl: z.string().nullable().default(null),
+  title: z.string().default(""),
+  /** Visible page text, truncated (redacted, untrusted). */
+  excerpt: z.string().default(""),
+  error: z.string().nullable().default(null),
+});
+export type LiveDemoCheck = z.infer<typeof LiveDemoCheckSchema>;
 
 export const MediaDigestSchema = z.object({
   deck: DeckDigestSchema.nullable().default(null),
   video: VideoDigestSchema.nullable().default(null),
+  liveDemo: LiveDemoCheckSchema.nullable().default(null),
   /** Artifact kind -> why it could not be fetched or read. */
   unreachable: z.record(z.string(), z.string()).default({}),
 });
