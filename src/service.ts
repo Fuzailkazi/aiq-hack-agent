@@ -19,6 +19,8 @@ export interface QueueItem {
 export function describeError(error: string | null): string {
   const raw = (error ?? "").replace(/^Error:\s*/, "");
   if (!raw) return "Scoring failed for an unknown reason. Run scoring again.";
+  if (/exceeded your current quota|billing/i.test(raw))
+    return "Not scored yet: the Gemini key's quota is used up (the free tier allows only 20 requests per model per day). Enable billing on the Google Cloud project, or run scoring again after the daily reset; finished steps are kept.";
   if (/\b429\b|RESOURCE_EXHAUSTED|quota/i.test(raw))
     return "Not scored yet: the Gemini rate limit was reached. Run scoring again; finished steps are kept.";
   if (/fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up/i.test(raw))

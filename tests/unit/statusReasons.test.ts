@@ -56,6 +56,11 @@ describe("statusReasons", () => {
     );
     expect(failed("Error: API key must be provided via constructor")[0]).toMatch(/no Gemini API key/);
     expect(failed("Error: disk full")).toEqual(["Scoring failed: disk full"]);
+    expect(
+      failed(
+        "Error: agent x returned no structured output (error=429 message=You exceeded your current quota, please check your plan and billing details)",
+      )[0],
+    ).toMatch(/quota is used up \(the free tier allows only 20 requests per model per day\)/);
     expect(statusReasons("scoring", ev({ status: "scoring" }))).toEqual([]);
     expect(statusReasons("finalized", null)).toEqual([]);
   });
