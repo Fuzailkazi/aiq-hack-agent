@@ -40,12 +40,49 @@ const UNPARSED_SUFFIXES = new Set([
 ]);
 const CODE_SUFFIXES = new Set([".py", ".ipynb", ...Object.keys(JS_SUFFIXES), ...SFC_SUFFIXES]);
 
+/**
+ * Partner SDKs for prize tracks, found by declaration or import (a name in a README does not count).
+ * Manifests: package names; code: imports and the API host.
+ */
+const PARTNERS: Record<string, { manifest: RegExp; code: RegExp }> = {
+  elevenlabs: {
+    manifest: /["'\s^](@elevenlabs\/[\w-]+|elevenlabs(?:-js)?)["'\s=<>~!]/m,
+    code: /(from\s+elevenlabs\b|import\s+elevenlabs\b|["']@elevenlabs\/[\w-]+["']|["']elevenlabs["']|api\.elevenlabs\.io|wss:\/\/api\.elevenlabs)/,
+  },
+};
+const MAX_PARTNER_HITS = 10;
+
+function partnerHits(
+  evidence: ArmorIQEvidence,
+  rel: string,
+  name: string,
+  suffix: string,
+  text: string,
+): void {
+  const manifest = INSTALL_FILE_NAMES.has(name);
+  if (!manifest && !CODE_SUFFIXES.has(suffix)) return;
+  for (const [partner, pattern] of Object.entries(PARTNERS)) {
+    const hits = evidence.partners[partner];
+    if (hits.length >= MAX_PARTNER_HITS) continue;
+    if (manifest) {
+      if (pattern.manifest.test(` ${text} `)) hits.push(rel);
+      continue;
+    }
+    const lines = text.split("\n");
+    const i = lines.findIndex((line) => pattern.code.test(line));
+    if (i >= 0) hits.push(`${rel}:${i + 1}`);
+  }
+}
+
 export async function scanRepo(root: string, sig: Signatures): Promise<ArmorIQEvidence> {
   await initTreeSitter();
   const redactor = SecretRedactor.fromSignatures(sig);
   const oversized: string[] = [];
   const files = iterRepoFiles(root, new Set(sig.excludeDirs), oversized);
-  const evidence = ArmorIQEvidenceSchema.parse({ installs: findInstalls(root, files, sig) });
+  const evidence = ArmorIQEvidenceSchema.parse({
+    installs: findInstalls(root, files, sig),
+    partners: Object.fromEntries(Object.keys(PARTNERS).map((p) => [p, []])),
+  });
   const needles = [...sig.pythonModules, ...sig.jsModules];
   const configNames = new Set(sig.configFiles.map((c) => c.toLowerCase()));
   const secrets = new Set<string>();
@@ -61,6 +98,7 @@ export async function scanRepo(root: string, sig: Signatures): Promise<ArmorIQEv
     if (configNames.has(name)) evidence.configFiles.push(rel);
     if (isEnvFile(rel)) evidence.envSignals.push(...scanEnv(rel, text, sig.envVars, redactor));
     scanCode(evidence, rel, text, suffix, sig, redactor);
+    partnerHits(evidence, rel, name, suffix, text);
     if (
       UNPARSED_SUFFIXES.has(suffix) &&
       !INSTALL_FILE_NAMES.has(name) &&

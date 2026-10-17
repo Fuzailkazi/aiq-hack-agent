@@ -144,6 +144,11 @@ describe("Flow State Google Form import", () => {
     expect(() => importCsv(db, "h", path, bad, NOW)).toThrow(/unknown timezone/);
   });
 
+  it("maps every form answer to its full column header (a # in YAML would start a comment)", () => {
+    expect(mapping.answers.hashtag).toBe("Confirm you used #FlowStateHackathon in your post");
+    expect(mapping.answers.xPost).toMatch(/@ArmorIQForDevs \(required unless/);
+  });
+
   it("ships a valid Flow State rubric", () => {
     const rubric = loadRubric("config/rubrics/flow_state.yaml");
     expect(rubric.criteria.map((c) => [c.id, c.weight])).toEqual([

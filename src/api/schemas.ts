@@ -51,12 +51,24 @@ export const ImportReportSchema = z.object({
 
 export const AddOutcomeSchema = z.object({ outcome: z.string() });
 
+export const CheckSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  state: z.enum(["pass", "fail", "warn", "pending"]),
+  detail: z.string(),
+});
+
 export const SubmissionRowSchema = z.object({
   id: z.string(),
   teamName: z.string(),
+  /** The project's name from the form, when the intake maps one. */
+  projectName: z.string().nullable(),
   repoUrl: z.string(),
   track: z.string().nullable(),
   status: StatusSchema,
+  /** Why the submission is in this status (disqualified, needs attention, error, ...); empty otherwise. */
+  reasons: z.array(z.string()),
+  checks: z.array(CheckSchema),
   autoScore: z.number().nullable(),
   finalScore: z.number().nullable(),
   confidence: z.number().nullable(),
@@ -65,6 +77,8 @@ export const SubmissionRowSchema = z.object({
 export const SubmissionDetailSchema = z.object({
   submission: SubmissionSchema,
   status: StatusSchema,
+  reasons: z.array(z.string()),
+  checks: z.array(CheckSchema),
   evaluation: EvaluationSchema.nullable(),
   /** Echoed for convenience: the calibration's per-criterion view drives the scorecard table. */
   calibration: CalibrationResultSchema.nullable(),

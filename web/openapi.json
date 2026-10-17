@@ -788,6 +788,10 @@
                       "teamName": {
                         "type": "string"
                       },
+                      "projectName": {
+                        "nullable": true,
+                        "type": "string"
+                      },
                       "repoUrl": {
                         "type": "string"
                       },
@@ -810,6 +814,45 @@
                           "error"
                         ]
                       },
+                      "reasons": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "checks": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": [
+                                "pass",
+                                "fail",
+                                "warn",
+                                "pending"
+                              ]
+                            },
+                            "detail": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "state",
+                            "detail"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
                       "autoScore": {
                         "nullable": true,
                         "type": "number"
@@ -826,9 +869,12 @@
                     "required": [
                       "id",
                       "teamName",
+                      "projectName",
                       "repoUrl",
                       "track",
                       "status",
+                      "reasons",
+                      "checks",
                       "autoScore",
                       "finalScore",
                       "confidence"
@@ -1032,6 +1078,45 @@
                         "superseded",
                         "error"
                       ]
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "checks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail",
+                              "warn",
+                              "pending"
+                            ]
+                          },
+                          "detail": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "state",
+                          "detail"
+                        ],
+                        "additionalProperties": false
+                      }
                     },
                     "evaluation": {
                       "nullable": true,
@@ -1267,6 +1352,16 @@
                               "items": {
                                 "type": "string"
                               }
+                            },
+                            "partners": {
+                              "default": {},
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
                             }
                           },
                           "required": [
@@ -1276,7 +1371,8 @@
                             "envSignals",
                             "configFiles",
                             "secretExposed",
-                            "redactedKeys"
+                            "redactedKeys",
+                            "partners"
                           ],
                           "additionalProperties": false
                         },
@@ -2282,6 +2378,8 @@
                   "required": [
                     "submission",
                     "status",
+                    "reasons",
+                    "checks",
                     "evaluation",
                     "calibration"
                   ],

@@ -26,7 +26,7 @@ export const STATUS: Record<Status, { label: string; tone: Tone; icon: Component
   finalized: { label: "Finalized", tone: "good", icon: IconCheckCircle },
   stale: { label: "Stale", tone: "info", icon: IconHistory },
   superseded: { label: "Superseded", tone: "neutral", icon: IconHistory },
-  error: { label: "Error", tone: "bad", icon: IconErrorCircle },
+  error: { label: "Not scored", tone: "warn", icon: IconErrorCircle },
 };
 
 export function StatusPill({ status }: { status: Status }) {

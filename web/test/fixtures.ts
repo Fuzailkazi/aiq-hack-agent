@@ -53,10 +53,19 @@ export function submission(status = "needs_review") {
       repoUrl: "https://github.com/o/guardrail",
       deck: null,
       video: null,
+      liveDemoUrl: null,
+      answers: {} as Record<string, string>,
       submittedAt: "2026-10-01T00:00:00Z",
       revision: 1,
     },
     status,
+    reasons: status === "needs_review" ? ["demo: agreement 0.10 < 0.50"] : [],
+    checks: [{ id: "sdk", label: "ArmorIQ SDK", state: "pass", detail: "Installed and called" }] as {
+      id: string;
+      label: string;
+      state: "pass" | "fail" | "warn" | "pending";
+      detail: string;
+    }[],
     calibration: null,
     evaluation: {
       submissionId: "s1",
