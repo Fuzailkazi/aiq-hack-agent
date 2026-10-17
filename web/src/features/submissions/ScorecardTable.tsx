@@ -1,5 +1,5 @@
 /** Per criterion: the LLM's level (score of record), Jev's independent distribution, and clickable citations. */
-import { IconCode, IconFile, IconPlay } from "@shared/icons";
+import { IconClipboard, IconCode, IconFile, IconPlay } from "@shared/icons";
 import { Chip } from "@shared/ui";
 import type { Evaluation, Rubric } from "../../api/client";
 import { type Focus, parseCitation } from "../../shared/citations";
@@ -9,7 +9,7 @@ import { JevBar } from "./JevBar";
 const tone = (x: number | null | undefined, floor: number) =>
   x === null || x === undefined ? "neutral" : x >= floor ? "good" : "bad";
 
-const SOURCE_ICON = { deck: IconFile, video: IconPlay, repo: IconCode } as const;
+const SOURCE_ICON = { deck: IconFile, video: IconPlay, repo: IconCode, form: IconClipboard } as const;
 
 const TH = "text-aq-caption tracking-aq-widest text-aq-ink-muted px-3 py-2 text-left font-medium uppercase";
 

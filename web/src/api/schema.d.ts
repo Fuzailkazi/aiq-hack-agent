@@ -174,7 +174,7 @@ export interface paths {
                                     name: string;
                                     description: string;
                                     weight: number;
-                                    sources: ("deck" | "video" | "repo")[];
+                                    sources: ("deck" | "video" | "repo" | "form")[];
                                     levels: {
                                         label: string;
                                         description: string;
@@ -339,6 +339,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             rank: number;
+                            track: string | null;
                             submissionId: string;
                             teamName: string;
                             finalScore: number;
@@ -569,6 +570,12 @@ export interface paths {
                                     /** @default null */
                                     unreachableReason: string | null;
                                 } | null;
+                                /** @default null */
+                                liveDemoUrl: string | null;
+                                /** @default {} */
+                                answers: {
+                                    [key: string]: string;
+                                };
                                 /** Format: date-time */
                                 submittedAt: string;
                                 /** @default 1 */
@@ -710,6 +717,23 @@ export interface paths {
                                         }[];
                                         /** @default null */
                                         analyzedUntilS: number | null;
+                                        /** @default null */
+                                        remoteUri: string | null;
+                                    } | null;
+                                    /** @default null */
+                                    liveDemo: {
+                                        url: string;
+                                        reachable: boolean;
+                                        /** @default null */
+                                        status: number | null;
+                                        /** @default null */
+                                        finalUrl: string | null;
+                                        /** @default  */
+                                        title: string;
+                                        /** @default  */
+                                        excerpt: string;
+                                        /** @default null */
+                                        error: string | null;
                                     } | null;
                                     /** @default {} */
                                     unreachable: {
@@ -743,7 +767,7 @@ export interface paths {
                                 /** @default [] */
                                 findings: {
                                     /** @enum {string} */
-                                    source: "deck" | "video" | "repo";
+                                    source: "deck" | "video" | "repo" | "form";
                                     summary: string;
                                     /** @default [] */
                                     findings: {
@@ -753,7 +777,7 @@ export interface paths {
                                         /** @default [] */
                                         citations: {
                                             /** @enum {string} */
-                                            source: "deck" | "video" | "repo";
+                                            source: "deck" | "video" | "repo" | "form";
                                             ref: string;
                                         }[];
                                         /** @default false */
@@ -776,7 +800,7 @@ export interface paths {
                                         /** @default [] */
                                         citations: {
                                             /** @enum {string} */
-                                            source: "deck" | "video" | "repo";
+                                            source: "deck" | "video" | "repo" | "form";
                                             ref: string;
                                         }[];
                                     }[];

@@ -28,7 +28,7 @@ export interface ProductionOptions {
   model?: (role: Role) => Model;
 }
 
-const ROLES: Role[] = ["deck", "video", "integration", "synthesis", "transcribe"];
+const ROLES: Role[] = ["deck", "video", "integration", "form", "synthesis", "transcribe"];
 
 export function buildProductionDeps(
   settings: Settings,
@@ -80,7 +80,15 @@ export function buildProductionDeps(
       }),
     scanArmoriq: (repoPath) => scanRepo(repoPath, signatures),
     decideGate: (evidence, snapshot) => decideGate(evidence, snapshot, policy.gate, jev),
-    ingestMedia: (sub) => ingestMedia(sub, { workspace: settings.workspace, transcriber, limits, cpu }),
+    ingestMedia: (sub) =>
+      ingestMedia(sub, {
+        workspace: settings.workspace,
+        transcriber,
+        limits,
+        cpu,
+        // Gemini watches public YouTube links itself; OpenAI needs the file (yt-dlp download + transcript).
+        remoteYoutube: provider === "gemini",
+      }),
     prescreen: (sub, media) => prescreen(sub, media, jev, rubric),
     analyze: (source, sub, media, evidence) => llm.run(() => analyzer.analyze(source, sub, media, evidence)),
     synthesize: (sub, findings, evidence) => llm.run(() => synthesizer.synthesize(sub, findings, evidence)),

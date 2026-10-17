@@ -5,6 +5,7 @@ export type Focus =
   | { kind: "slide"; index: number }
   | { kind: "time"; seconds: number }
   | { kind: "code"; path: string; line: number }
+  | { kind: "form" }
   | { kind: "none" };
 
 export function parseCitation(c: Citation): Focus {
@@ -18,6 +19,7 @@ export function parseCitation(c: Citation): Focus {
     const seconds = m[1].split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
     return { kind: "time", seconds };
   }
+  if (c.source === "form") return { kind: "form" };
   const m = c.ref.match(/^(.+?):(\d+)/);
   return m ? { kind: "code", path: m[1], line: Number(m[2]) } : { kind: "none" };
 }

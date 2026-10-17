@@ -1,0 +1,55 @@
+# Flow State Hackathon rubric. Weights are points out of 120 and are normalized to a 0-100 score.
+# Teams that do not both install and call the ArmorIQ SDK are disqualified by the gate before any scoring.
+# ElevenLabs teams are ranked on their own leaderboard (track "elevenlabs"), with the same criteria.
+id: flow_state
+version: "1"
+tracks: [main, elevenlabs]
+criteria:
+  - id: demo_video
+    name: Demo video
+    description: Clarity and quality of the explanation in the 3 to 5 minute demo video.
+    weight: 40
+    sources: [video]
+    levels:
+      - {label: Missing, description: No video, or it cannot be watched.}
+      - {label: Unclear, description: Hard to follow; does not explain what was built or why.}
+      - {label: Clear, description: Explains the problem and what was built, and shows the product.}
+      - {label: Excellent, description: "Crisp and well structured: problem, product and how ArmorIQ protects it, shown with real usage."}
+  - id: live_demo
+    name: Live demo
+    description: Does the deployed app work, and is it usable? Judged from the live demo check and what the video shows of the app running.
+    weight: 40
+    sources: [video, form]
+    levels:
+      - {label: Missing, description: No live demo URL, or it does not load.}
+      - {label: Broken, description: "The URL loads, but it is a placeholder or the core flow is not shown working."}
+      - {label: Works, description: The app is online and its core flow is shown working with real output.}
+      - {label: Polished, description: "Online, works end to end, and a new user could use it without help."}
+  - id: armoriq_integration
+    name: ArmorIQ integration depth
+    description: How well and how centrally the project uses the ArmorIQ SDK (from repository evidence).
+    weight: 20
+    sources: [repo]
+    levels:
+      - {label: Token, description: SDK called in one incidental place.}
+      - {label: Basic, description: "SDK guards a single flow (e.g. one capture_plan + invoke)."}
+      - {label: Integrated, description: SDK guards most agent/tool calls.}
+      - {label: Core, description: ArmorIQ intent verification and policy enforcement are central to the architecture across flows.}
+  - id: takeaways
+    name: Takeaways
+    description: Insight, ambition and next steps, from the team's feedback answer and the video.
+    weight: 15
+    sources: [form, video]
+    levels:
+      - {label: None, description: No takeaways, or only generic praise or complaints.}
+      - {label: Basic, description: Some lessons or next steps, but generic.}
+      - {label: Thoughtful, description: Specific insights from building the project and concrete next steps.}
+      - {label: Exceptional, description: "Sharp, non-obvious insights and an ambitious, credible plan for what comes next."}
+  - id: armortools_pro
+    name: ArmorTools Pro account
+    description: The team reports an ArmorTools Pro subscription for every member (self-reported form answer).
+    weight: 5
+    sources: [form]
+    levels:
+      - {label: "No", description: "Not subscribed, or no answer."}
+      - {label: "Yes", description: The form answer says every member subscribed to ArmorTools Pro.}

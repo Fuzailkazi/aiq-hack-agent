@@ -8,7 +8,7 @@ import {
   MediaDigestSchema,
 } from "../schemas/evidence";
 import { type ArtifactFindings, ArtifactFindingsSchema, ScorecardSchema } from "../schemas/findings";
-import { hasRepoCriteria, type Source } from "../schemas/rubric";
+import { forSource, type Source } from "../schemas/rubric";
 import { type Submission, SubmissionSchema } from "../schemas/submission";
 import type { PipelineDeps } from "./deps";
 import { nodeEvent } from "./events";
@@ -18,6 +18,7 @@ export const ANALYSTS: Record<string, Source> = {
   deck_analyst: "deck",
   video_analyst: "video",
   integration_analyst: "repo",
+  form_analyst: "form",
 };
 
 type State = { get(key: string): unknown };
@@ -44,10 +45,10 @@ export function buildScoringWorkflow(deps: PipelineDeps): Workflow {
 
   const analyst = (name: string, source: Source) =>
     new FunctionNode(name, async (ctx): Promise<ArtifactFindings> => {
-      if (source === "repo" && !hasRepoCriteria(deps.rubric)) {
+      if ((source === "repo" || source === "form") && !forSource(deps.rubric, source).length) {
         return ArtifactFindingsSchema.parse({
-          source: "repo",
-          summary: "The rubric has no repo-sourced criteria.",
+          source,
+          summary: `The rubric has no ${source}-sourced criteria.`,
         });
       }
       return deps.analyze(source, submissionOf(ctx.state), mediaOf(ctx.state), evidenceOf(ctx.state));

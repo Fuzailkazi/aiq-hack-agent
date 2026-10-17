@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
-export const SourceSchema = z.enum(["deck", "video", "repo"]);
+/** Artifacts a criterion can be judged from. "form" is the team's written answers plus the live demo check. */
+export const SourceSchema = z.enum(["deck", "video", "repo", "form"]);
 export type Source = z.infer<typeof SourceSchema>;
 
 const slug = z.string().regex(/^[a-z][a-z0-9_]*$/, "must be a lowercase slug (a-z, 0-9, _)");

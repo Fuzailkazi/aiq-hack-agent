@@ -79,21 +79,36 @@ export const SignaturesSchema = z.object({
 });
 export type Signatures = z.infer<typeof SignaturesSchema>;
 
+/** Track from a column's value, e.g. "Did you use ElevenLabs?" Yes -> elevenlabs, anything else -> main. */
+export const TrackRuleSchema = z.object({
+  column: z.string(),
+  /** Cell value (compared case-insensitively, trimmed) -> track. */
+  values: z.record(z.string(), z.string()).default({}),
+  default: z.string().nullable().default(null),
+});
+export type TrackRule = z.infer<typeof TrackRuleSchema>;
+
 /** Our submission field -> CSV column header. */
 export const IntakeMappingSchema = z.object({
   teamName: z.string().default("team_name"),
   repoUrl: z.string().default("repo_url"),
-  deck: z.string().default("deck"),
-  video: z.string().default("video"),
-  track: z.string().nullable().default("track"),
+  deck: z.string().nullable().default("deck"),
+  video: z.string().nullable().default("video"),
+  /** A column holding the track name, or a rule deriving it from another column's value. */
+  track: z.union([z.string(), TrackRuleSchema]).nullable().default("track"),
   externalId: z.string().nullable().default("external_id"),
   submittedAt: z.string().nullable().default("submitted_at"),
+  liveDemo: z.string().nullable().default(null),
+  /** IANA zone for timestamps without an offset (Google Forms exports "10/14/2026 12:26:21"); null rejects them. */
+  timezone: z.string().nullable().default(null),
+  /** Free-text form answers shown to the form analyst: our key -> CSV column header. */
+  answers: z.record(z.string(), z.string()).default({}),
 });
 export type IntakeMapping = z.infer<typeof IntakeMappingSchema>;
 
 export const ProviderSchema = z.enum(["gemini", "openai"]);
 export type Provider = z.infer<typeof ProviderSchema>;
-export type Role = "deck" | "video" | "integration" | "synthesis" | "transcribe";
+export type Role = "deck" | "video" | "integration" | "form" | "synthesis" | "transcribe";
 
 const ModelPriceSchema = z.object({
   inputPerMtok: z.number().default(0),

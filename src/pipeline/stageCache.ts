@@ -74,7 +74,14 @@ export function withStageCache(deps: PipelineDeps, cache: StageCache, versions: 
   return {
     ...deps,
     analyze: (source, sub, media, evidence) => {
-      const input = source === "deck" ? media.deck : source === "video" ? media.video : evidence;
+      const input =
+        source === "deck"
+          ? media.deck
+          : source === "video"
+            ? media.video
+            : source === "form"
+              ? { answers: sub.answers, liveDemoUrl: sub.liveDemoUrl, liveDemo: media.liveDemo }
+              : evidence;
       const team = { teamName: sub.teamName, repoUrl: sub.repoUrl };
       return cache.memo(`analyze-${source}`, { versions, team, input }, ArtifactFindingsSchema, () =>
         deps.analyze(source, sub, media, evidence),

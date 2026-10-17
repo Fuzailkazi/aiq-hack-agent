@@ -7,10 +7,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { checkLiveDemo } from "../acquire/liveDemo";
 import { type FetchOptions, fetchArtifact, type VideoDownloader } from "../acquire/media";
 import {
   type DeckDigest,
   DeckDigestSchema,
+  type LiveDemoCheck,
   type MediaDigest,
   type VideoDigest,
   VideoDigestSchema,
@@ -57,6 +59,32 @@ export interface IngestOptions {
   cpu?: Limiter;
   fetchImpl?: typeof fetch;
   videoDownloader?: VideoDownloader;
+  /** Hand public YouTube links to the model as-is (Gemini watches them) instead of downloading them. */
+  remoteYoutube?: boolean;
+  /** Live demo checker (tests inject a fake). */
+  liveDemoCheck?: (url: string) => Promise<LiveDemoCheck>;
+}
+
+const YOUTUBE =
+  /^https?:\/\/(?:(?:www|m)\.)?(?:youtube\.com\/(?:watch\?|shorts\/|live\/|embed\/)|youtu\.be\/)/i;
+
+/** A canonical https://www.youtube.com/watch?v=<id> link, or null when `url` is not a YouTube video link. */
+export function youtubeWatchUrl(url: string): string | null {
+  if (!YOUTUBE.test(url.trim())) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.toLowerCase();
+  const path = parsed.pathname.split("/").filter(Boolean);
+  const id =
+    host === "youtu.be"
+      ? path[0]
+      : (parsed.searchParams.get("v") ??
+        (["shorts", "live", "embed"].includes(path[0]) ? path[1] : undefined));
+  return id && /^[\w-]{6,20}$/.test(id) ? `https://www.youtube.com/watch?v=${id}` : null;
 }
 
 /** Digest parameters that change the output; part of the cache key ("r1": text is secret-redacted). */
@@ -154,7 +182,17 @@ export async function ingestMedia(sub: Submission, opts: IngestOptions): Promise
   }
 
   let video: VideoDigest | null = null;
-  if (sub.video) {
+  const remote = sub.video?.origin === "url" && opts.remoteYoutube ? youtubeWatchUrl(sub.video.uri) : null;
+  if (remote) {
+    video = {
+      durationS: 0,
+      hasSpeech: true,
+      transcript: [],
+      keyframes: [],
+      analyzedUntilS: null,
+      remoteUri: remote,
+    };
+  } else if (sub.video) {
     const fetched = await fetchArtifact(sub.video, downloads, fetchOpts(limits.videoMaxBytes));
     if (!fetched.path || !fetched.sha256)
       unreachable.video = fetched.unreachableReason ?? "video could not be fetched";
@@ -173,7 +211,10 @@ export async function ingestMedia(sub: Submission, opts: IngestOptions): Promise
       }
     }
   }
-  return { deck, video, unreachable };
+  const liveDemo = sub.liveDemoUrl
+    ? redactDeep(await (opts.liveDemoCheck ?? ((url: string) => checkLiveDemo(url)))(sub.liveDemoUrl))
+    : null;
+  return { deck, video, liveDemo, unreachable };
 }
 
 async function digestVideo(
@@ -200,5 +241,6 @@ async function digestVideo(
     transcript,
     keyframes,
     analyzedUntilS: durationS > limits.maxVideoS ? limits.maxVideoS : null,
+    remoteUri: null,
   };
 }

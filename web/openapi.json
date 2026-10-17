@@ -257,7 +257,8 @@
                                   "enum": [
                                     "deck",
                                     "video",
-                                    "repo"
+                                    "repo",
+                                    "form"
                                   ]
                                 }
                               },
@@ -583,6 +584,10 @@
                       "rank": {
                         "type": "number"
                       },
+                      "track": {
+                        "nullable": true,
+                        "type": "string"
+                      },
                       "submissionId": {
                         "type": "string"
                       },
@@ -602,6 +607,7 @@
                     },
                     "required": [
                       "rank",
+                      "track",
                       "submissionId",
                       "teamName",
                       "finalScore",
@@ -971,6 +977,18 @@
                           ],
                           "additionalProperties": false
                         },
+                        "liveDemoUrl": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "answers": {
+                          "default": {},
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
                         "submittedAt": {
                           "type": "string",
                           "format": "date-time",
@@ -993,6 +1011,8 @@
                         "repoRef",
                         "deck",
                         "video",
+                        "liveDemoUrl",
+                        "answers",
                         "submittedAt",
                         "revision"
                       ],
@@ -1507,6 +1527,11 @@
                                   "default": null,
                                   "nullable": true,
                                   "type": "number"
+                                },
+                                "remoteUri": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "string"
                                 }
                               },
                               "required": [
@@ -1514,7 +1539,56 @@
                                 "hasSpeech",
                                 "transcript",
                                 "keyframes",
-                                "analyzedUntilS"
+                                "analyzedUntilS",
+                                "remoteUri"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "liveDemo": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "reachable": {
+                                  "type": "boolean"
+                                },
+                                "status": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "finalUrl": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "default": "",
+                                  "type": "string"
+                                },
+                                "excerpt": {
+                                  "default": "",
+                                  "type": "string"
+                                },
+                                "error": {
+                                  "default": null,
+                                  "nullable": true,
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "reachable",
+                                "status",
+                                "finalUrl",
+                                "title",
+                                "excerpt",
+                                "error"
                               ],
                               "additionalProperties": false
                             },
@@ -1529,6 +1603,7 @@
                           "required": [
                             "deck",
                             "video",
+                            "liveDemo",
                             "unreachable"
                           ],
                           "additionalProperties": false
@@ -1628,7 +1703,8 @@
                                 "enum": [
                                   "deck",
                                   "video",
-                                  "repo"
+                                  "repo",
+                                  "form"
                                 ]
                               },
                               "summary": {
@@ -1661,7 +1737,8 @@
                                             "enum": [
                                               "deck",
                                               "video",
-                                              "repo"
+                                              "repo",
+                                              "form"
                                             ]
                                           },
                                           "ref": {
@@ -1755,7 +1832,8 @@
                                           "enum": [
                                             "deck",
                                             "video",
-                                            "repo"
+                                            "repo",
+                                            "form"
                                           ]
                                         },
                                         "ref": {

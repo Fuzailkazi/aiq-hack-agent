@@ -146,7 +146,7 @@ describe.skipIf(!hasFfmpeg())("ingestMedia", () => {
       workspace: tempDir(),
       transcriber: new CountingTranscriber(),
     });
-    expect(media).toEqual({ deck: null, video: null, unreachable: {} });
+    expect(media).toEqual({ deck: null, video: null, liveDemo: null, unreachable: {} });
   });
 
   it("reports missing uploads and unreadable decks", async () => {

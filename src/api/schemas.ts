@@ -112,6 +112,7 @@ export const RunJobSchema = z.object({
 
 export const LeaderboardRowSchema = z.object({
   rank: z.number(),
+  track: z.string().nullable(),
   submissionId: z.string(),
   teamName: z.string(),
   finalScore: z.number(),

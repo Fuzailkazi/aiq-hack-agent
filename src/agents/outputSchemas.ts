@@ -7,8 +7,10 @@ import type { ArtifactFindings, Scorecard } from "../schemas/findings";
 import { type Criterion, forSource, levelIndex, type Rubric, type Source } from "../schemas/rubric";
 
 const CitationOut = z.object({
-  source: z.enum(["deck", "video", "repo"]),
-  ref: z.string().describe('Where the evidence is: "slide 4", "02:13" or "path/to/file.py:42"'),
+  source: z.enum(["deck", "video", "repo", "form"]),
+  ref: z
+    .string()
+    .describe('Where the evidence is: "slide 4", "02:13", "path/to/file.py:42" or a form answer key'),
 });
 
 const labels = (c: Criterion) => z.enum(c.levels.map((l) => l.label) as [string, ...string[]]);

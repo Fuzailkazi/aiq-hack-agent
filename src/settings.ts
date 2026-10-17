@@ -1,6 +1,6 @@
 /** Runtime settings from environment variables (prefix HACKEVAL_), plus the config/ directory loaders. */
 import { availableParallelism } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { z } from "zod";
 import {
   type IntakeMapping,
@@ -22,6 +22,8 @@ const int = (min: number) => z.coerce.number().int().min(min);
 
 export const SettingsSchema = z.object({
   configDir: z.string().default("config"),
+  /** CSV column mapping, relative to configDir unless absolute (e.g. intake.flow_state.yaml for the Google Form). */
+  intakeFile: z.string().default("intake.yaml"),
   workspace: z.string().default("workspace"),
   dbPath: z.string().default("workspace/hackeval.db"),
   /** Pinned full version; never jev-latest. */
@@ -47,6 +49,7 @@ export type Settings = z.infer<typeof SettingsSchema>;
 
 const ENV: Record<string, keyof Settings> = {
   HACKEVAL_CONFIG_DIR: "configDir",
+  HACKEVAL_INTAKE: "intakeFile",
   HACKEVAL_WORKSPACE: "workspace",
   HACKEVAL_DB_PATH: "dbPath",
   HACKEVAL_JEV_MODEL: "jevModel",
@@ -77,5 +80,6 @@ export function loadSettings(
 export const policyOf = (s: Settings): Policy => loadPolicy(join(s.configDir, "policy.yaml"));
 export const signaturesOf = (s: Settings): Signatures =>
   loadSignatures(join(s.configDir, "armoriq_signatures.yaml"));
-export const intakeOf = (s: Settings): IntakeMapping => loadIntake(join(s.configDir, "intake.yaml"));
+export const intakeOf = (s: Settings): IntakeMapping =>
+  loadIntake(isAbsolute(s.intakeFile) ? s.intakeFile : join(s.configDir, s.intakeFile));
 export const modelsOf = (s: Settings): ModelsConfig => loadModels(join(s.configDir, "models.yaml"));
