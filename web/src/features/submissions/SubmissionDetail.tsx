@@ -234,9 +234,9 @@ export function SubmissionDetail() {
                 </Banner>
               ))}
               {gate.feedbackMd && (
-                <pre className="bg-aq-zebra text-aq-sm text-aq-ink-soft rounded-md p-3 font-sans whitespace-pre-wrap">
-                  {gate.feedbackMd}
-                </pre>
+                <div className="bg-aq-zebra rounded-md p-3">
+                  <Markdown text={gate.feedbackMd} />
+                </div>
               )}
             </div>
           </Panel>

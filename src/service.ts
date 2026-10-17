@@ -111,12 +111,13 @@ export function checklist(sub: Submission, ev: Evaluation | null): Check[] {
             : "Claimed in the form, but no ElevenLabs SDK or API call was found in the repo",
     });
   }
+  const skipped = gate === "fail";
   const videoError = ev?.mediaUnreachable.video;
   const video = ev?.media?.video;
   checks.push({
     id: "video",
     label: "Demo video",
-    state: !sub.video ? "fail" : videoError ? "fail" : video ? "pass" : "pending",
+    state: !sub.video ? "fail" : videoError ? "fail" : video ? "pass" : skipped ? "warn" : "pending",
     detail: !sub.video
       ? "No video link submitted"
       : videoError
@@ -125,7 +126,9 @@ export function checklist(sub: Submission, ev: Evaluation | null): Check[] {
           ? video.remoteUri
             ? "Watched by the AI judge"
             : "Downloaded and transcribed"
-          : "Not checked yet",
+          : skipped
+            ? "Skipped: the team did not pass the SDK gate"
+            : "Not checked yet",
   });
   const demo = ev?.media?.liveDemo;
   checks.push({
@@ -143,7 +146,9 @@ export function checklist(sub: Submission, ev: Evaluation | null): Check[] {
     detail: !sub.liveDemoUrl
       ? "No live demo URL submitted"
       : !demo
-        ? "Not checked yet"
+        ? skipped
+          ? "Skipped: the team did not pass the SDK gate"
+          : "Not checked yet"
         : !demo.reachable
           ? `Unreachable: ${demo.error ?? "no response"}`
           : demo.error

@@ -5,12 +5,17 @@
 import type { ReactNode } from "react";
 
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
       // biome-ignore lint/suspicious/noArrayIndexKey: parts of one static string
       <strong key={i} className="text-aq-ink font-semibold">
         {part.slice(2, -2)}
       </strong>
+    ) : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? (
+      // biome-ignore lint/suspicious/noArrayIndexKey: parts of one static string
+      <code key={i} className="bg-aq-surface text-aq-ink rounded px-1 font-mono">
+        {part.slice(1, -1)}
+      </code>
     ) : (
       part
     ),
