@@ -11,32 +11,30 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        post: {
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        token: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": {
+                            email: string;
+                        };
+                    };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete: {
             parameters: {
                 query?: never;

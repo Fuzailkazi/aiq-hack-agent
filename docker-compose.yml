@@ -1,4 +1,4 @@
-# `docker compose up -d` serves the UI/API on http://127.0.0.1:8000 (sign in with HACKEVAL_ADMIN_TOKEN from .env).
+# `docker compose up -d` serves the UI/API on http://127.0.0.1:8000 (sign in with Google; GOOGLE_OAUTH_* and HACKEVAL_ALLOWED_EMAILS in .env).
 # CLI commands run in a one-off container on the same data volume, e.g.
 #   docker compose run --rm hackeval status --hackathon demo
 services:

@@ -13,7 +13,7 @@ The leaderboard ranks each track on its own (e.g. a separate ElevenLabs prize).
 - **Design:** [`docs/design.md`](docs/design.md)
 
 ```bash
-cp .env.example .env             # keys + HACKEVAL_ADMIN_TOKEN
+cp .env.example .env             # keys + Google sign-in (see docs/runbook.md)
 npm ci && npm ci --prefix web && npm run web:build
 npm run hackeval -- init demo --deadline 2026-10-20T23:59:00Z
 export HACKEVAL_HACKATHON=demo

@@ -339,13 +339,15 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
 
   program
     .command("serve")
-    .description("Serve the HTTP API and the web UI (requires HACKEVAL_ADMIN_TOKEN).")
+    .description("Serve the HTTP API and the web UI (sign in with Google; see docs/runbook.md).")
     .option("--host <host>", "interface to bind", "127.0.0.1")
     .option("--port <port>", "port", (v) => Number.parseInt(v, 10), 8000)
     .action(async (o: { host: string; port: number }) => {
       const s = settings();
-      if (!s.adminToken)
-        throw new CliError("set HACKEVAL_ADMIN_TOKEN before serving (the UI and API always require auth)");
+      if (!s.googleClientId || !s.googleClientSecret)
+        throw new CliError(
+          "set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET before serving (sign in with Google; see docs/runbook.md)",
+        );
       const app = await buildApp({ settings: s, db: database(), buildDeps, webDist: WEB_DIST, logger: true });
       await app.listen({ host: o.host, port: o.port });
       await new Promise<void>((done) => {

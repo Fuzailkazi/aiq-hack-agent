@@ -43,7 +43,15 @@ export const SettingsSchema = z.object({
   allowLocalRepos: bool.default(false),
   soffice: z.string().default("soffice"),
   githubToken: z.string().nullable().default(null),
-  adminToken: z.string().nullable().default(null),
+  /** Google OAuth client for "Sign in with Google" (the UI and API need a signed-in, allowlisted account). */
+  googleClientId: z.string().nullable().default(null),
+  googleClientSecret: z.string().nullable().default(null),
+  /** Who may sign in: comma- or space-separated emails. */
+  allowedEmails: z.string().default("fuzail@armoriq.io,isha@armoriq.io"),
+  /** HMAC key for session cookies; without it sessions end when the server restarts. */
+  sessionSecret: z.string().nullable().default(null),
+  /** Where people reach the server; Google redirects back to <publicUrl>/api/auth/google/callback. */
+  publicUrl: z.string().default("http://127.0.0.1:8000"),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
@@ -63,7 +71,11 @@ const ENV: Record<string, keyof Settings> = {
   HACKEVAL_ALLOW_LOCAL_REPOS: "allowLocalRepos",
   HACKEVAL_SOFFICE: "soffice",
   GITHUB_TOKEN: "githubToken",
-  HACKEVAL_ADMIN_TOKEN: "adminToken",
+  GOOGLE_OAUTH_CLIENT_ID: "googleClientId",
+  GOOGLE_OAUTH_CLIENT_SECRET: "googleClientSecret",
+  HACKEVAL_ALLOWED_EMAILS: "allowedEmails",
+  HACKEVAL_SESSION_SECRET: "sessionSecret",
+  HACKEVAL_PUBLIC_URL: "publicUrl",
 };
 
 export function loadSettings(

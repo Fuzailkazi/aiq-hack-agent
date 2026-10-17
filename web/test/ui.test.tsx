@@ -11,27 +11,26 @@ const renderAt = (path: string) => {
 };
 
 describe("sign-in", () => {
-  it("shows the login form on 401 and signs in with the token", async () => {
-    let signedIn = false;
+  it("shows Sign in with Google on 401, and why an account was refused", async () => {
     mockApi({
-      "GET /api/hackathons": () =>
-        signedIn
-          ? [HACKATHON.hackathon]
-          : new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 }),
-      "POST /api/session": (req: Request) =>
-        req.json().then((b: { token: string }) => {
-          signedIn = b.token === "tok";
-          return new Response(null, { status: signedIn ? 204 : 401 });
-        }),
+      "GET /api/hackathons": () => new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 }),
+      "GET /api/auth/config": { provider: "google", contact: "fuzail@armoriq.io" },
+    });
+    renderAt("/?signin_error=someone%40gmail.com%20is%20not%20allowed%20to%20use%20this%20app");
+    expect(await screen.findByRole("button", { name: "Sign in with Google" })).toBeTruthy();
+    expect(
+      await screen.findByText(/someone@gmail.com is not allowed.*Ask fuzail@armoriq.io for access/),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText(/token/i)).toBeNull();
+  });
+
+  it("shows who is signed in", async () => {
+    mockApi({
+      "GET /api/hackathons": [HACKATHON.hackathon],
+      "GET /api/session": { email: "isha@armoriq.io" },
     });
     renderAt("/");
-    const field = await screen.findByLabelText(/Admin token/);
-    fireEvent.change(field, { target: { value: "wrong" } });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    await screen.findByText("That token was not accepted.");
-    fireEvent.change(field, { target: { value: "tok" } });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    expect(await screen.findByRole("link", { name: "Hack" })).toBeTruthy();
+    expect(await screen.findByText("Signed in as isha@armoriq.io")).toBeTruthy();
   });
 });
 

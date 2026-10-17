@@ -34,7 +34,8 @@ Anything the scanner cannot follow goes to Jev or a human, never to an automatic
 1. **Keys.** Copy `.env.example` to `.env` and fill in:
    - `TYPESAFE_API_KEY` (Jev). **No Jev key?** Set `HACKEVAL_SECOND_OPINION=none`. The LLM still scores every submission, but nothing is auto-accepted: every result goes to the review queue with its score, and a judge approves or overrides it. Unresolved gate cases also go to a judge instead of Jev;
    - `GOOGLE_API_KEY` and/or `OPENAI_API_KEY`;
-   - `HACKEVAL_ADMIN_TOKEN`, a long random string that is the UI/API password;
+   - **Sign in with Google** (there is no shared password or token). In Google Cloud Console, open *APIs & Services > Credentials*, create an **OAuth client ID** of type *Web application*, and add the redirect URI `<HACKEVAL_PUBLIC_URL>/api/auth/google/callback` (locally `http://127.0.0.1:8000/api/auth/google/callback`). Put its id and secret in `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`. Set `HACKEVAL_SESSION_SECRET` to a long random string (`openssl rand -hex 32`) so sign-ins survive restarts;
+   - `HACKEVAL_ALLOWED_EMAILS`: who may sign in (default `fuzail@armoriq.io,isha@armoriq.io`). Google must report the address as verified, and anyone else is turned away;
    - optionally `GITHUB_TOKEN` to clone private repos.
 2. **Choose the LLM provider.** Set `HACKEVAL_LLM_PROVIDER=gemini` or `openai`. Model ids per role live in `config/models.yaml`. Run `hackeval models` to print the active set.
 3. **Run it** in one of two ways:
@@ -101,7 +102,7 @@ Concurrency is capped by:
   - The scanner parses code with tree-sitter. It never imports or runs it.
 - Real ArmorIQ keys (`ak_live_` / `ak_test_` / `ak_claw_`) found in repos are stored only in redacted form. They are never sent to an LLM or to Jev.
 - Deck and video content goes to the LLMs fenced as untrusted data. Jev flags text aimed at an AI judge, and that sends the result to a human.
-- The UI and API always require `HACKEVAL_ADMIN_TOKEN`. Compose binds to 127.0.0.1; put a TLS reverse proxy in front before exposing it.
+- The UI and API always require a Google sign-in from an allowlisted, verified email (`HACKEVAL_ALLOWED_EMAILS`). Sign-in uses the OAuth code flow with PKCE and a state check; the session is a signed HttpOnly cookie that lasts 12 hours. Compose binds to 127.0.0.1; to let others in, host it behind TLS, set `HACKEVAL_PUBLIC_URL` to the https address, and register that callback URL with the OAuth client (cookies then become Secure).
 - The API serves media only by submission id and index, from files the server itself wrote inside the workspace. It never accepts server-side paths from clients.
 
 ### Troubleshooting

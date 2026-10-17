@@ -6,37 +6,36 @@
   },
   "components": {
     "securitySchemes": {
-      "bearer": {
-        "type": "http",
-        "scheme": "bearer"
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "hackeval_session"
       }
     },
     "schemas": {}
   },
   "paths": {
     "/api/session": {
-      "post": {
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "token": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "token"
-                ]
-              }
-            }
-          }
-        },
+      "get": {
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       },
@@ -2871,7 +2870,7 @@
   },
   "security": [
     {
-      "bearer": []
+      "session": []
     }
   ]
 }

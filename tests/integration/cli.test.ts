@@ -124,10 +124,10 @@ describe("hackeval CLI", () => {
     expect(report.errors).toEqual([]);
   });
 
-  it("serve refuses to start without an admin token", async () => {
+  it("serve refuses to start without Google sign-in configured", async () => {
     const result = await cli("serve", "--port", "0");
     expect(result.code).toBe(1);
-    expect(result.err).toContain("HACKEVAL_ADMIN_TOKEN");
+    expect(result.err).toContain("GOOGLE_OAUTH_CLIENT_ID");
   });
 
   it("rejects naive deadlines and bad repo URLs", async () => {
