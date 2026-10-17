@@ -11,7 +11,7 @@ const USER_ID = "judge";
  * Rate limits, overload ("high demand") and dropped connections clear up on their own, so they are retried.
  * Network failures arrive from ADK as UNKNOWN_ERROR with the fetch error as the message.
  */
-const TRANSIENT =
+export const TRANSIENT =
   /\b(429|500|502|503|504|RESOURCE_EXHAUSTED|UNAVAILABLE|INTERNAL|DEADLINE_EXCEEDED)\b|fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up|other side closed/i;
 
 export interface RetryPolicy {
