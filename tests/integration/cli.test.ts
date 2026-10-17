@@ -130,6 +130,14 @@ describe("hackeval CLI", () => {
     expect(result.err).toContain("GOOGLE_OAUTH_CLIENT_ID");
   });
 
+  it("local-only mode will not bind to a public interface", async () => {
+    const result = await runCli(["serve", "--host", "0.0.0.0", "--port", "0"], {
+      env: { ...env, HACKEVAL_LOCAL_ONLY: "true" },
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toContain("only binds to 127.0.0.1");
+  });
+
   it("rejects naive deadlines and bad repo URLs", async () => {
     const naive = await cli("init", "demo", "--deadline", "2026-10-20T23:59:00");
     expect(naive.code).toBe(1);

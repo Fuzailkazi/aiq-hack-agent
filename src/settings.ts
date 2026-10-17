@@ -50,6 +50,11 @@ export const SettingsSchema = z.object({
   allowedEmails: z.string().default("fuzail@armoriq.io,isha@armoriq.io"),
   /** HMAC key for session cookies; without it sessions end when the server restarts. */
   sessionSecret: z.string().nullable().default(null),
+  /**
+   * Laptop use without sign-in: allowed only on a loopback address with a localhost public URL (the server refuses
+   * otherwise). Anyone using this machine can open the UI; hosted deployments must use Google sign-in.
+   */
+  localOnly: bool.default(false),
   /** Where people reach the server; Google redirects back to <publicUrl>/api/auth/google/callback. */
   publicUrl: z.string().default("http://127.0.0.1:8000"),
 });
@@ -76,6 +81,7 @@ const ENV: Record<string, keyof Settings> = {
   HACKEVAL_ALLOWED_EMAILS: "allowedEmails",
   HACKEVAL_SESSION_SECRET: "sessionSecret",
   HACKEVAL_PUBLIC_URL: "publicUrl",
+  HACKEVAL_LOCAL_ONLY: "localOnly",
 };
 
 export function loadSettings(

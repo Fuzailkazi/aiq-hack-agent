@@ -98,6 +98,17 @@ export function authHook(secret: string) {
   };
 }
 
+const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+export const isLoopbackHost = (host: string): boolean => LOOPBACK.has(host.toLowerCase());
+export function isLoopbackUrl(url: string): boolean {
+  try {
+    return isLoopbackHost(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+export const LOCAL_ONLY_USER = "local mode (no sign-in)";
+
 export const callbackUrl = (cfg: GoogleAuthConfig) =>
   `${cfg.publicUrl.replace(/\/+$/, "")}/api/auth/google/callback`;
 

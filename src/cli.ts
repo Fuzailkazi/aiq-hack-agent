@@ -6,6 +6,7 @@ import { LogLevel, setLogLevel } from "@google/adk";
 import { Command, CommanderError, Option } from "commander";
 import { ZodError } from "zod";
 import { buildApp } from "./api/app";
+import { isLoopbackHost } from "./api/auth";
 import { calibrationReport } from "./calibrateGold";
 import { modelFor } from "./config";
 import { addSubmission, importCsv, parseTimestamp } from "./intake";
@@ -344,7 +345,11 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
     .option("--port <port>", "port", (v) => Number.parseInt(v, 10), 8000)
     .action(async (o: { host: string; port: number }) => {
       const s = settings();
-      if (!s.googleClientId || !s.googleClientSecret)
+      if (s.localOnly && !isLoopbackHost(o.host))
+        throw new CliError(
+          `HACKEVAL_LOCAL_ONLY skips sign-in, so serve only binds to 127.0.0.1 or localhost (got --host ${o.host})`,
+        );
+      if (!s.localOnly && (!s.googleClientId || !s.googleClientSecret))
         throw new CliError(
           "set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET before serving (sign in with Google; see docs/runbook.md)",
         );

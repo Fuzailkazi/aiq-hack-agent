@@ -172,6 +172,25 @@ describe("API auth", () => {
     expect((await api("GET", "/api/hackathons")).statusCode).toBe(200);
   });
 
+  it("local-only mode skips sign-in on localhost and refuses any other public URL", async () => {
+    const base = {
+      HACKEVAL_DB_PATH: join(dir, "l.db"),
+      HACKEVAL_WORKSPACE: join(dir, "ws"),
+      HACKEVAL_LOCAL_ONLY: "true",
+    };
+    const local = await buildApp({ settings: loadSettings(base), db: openDb(join(dir, "l.db")) });
+    expect((await local.inject({ method: "GET", url: "/api/hackathons" })).statusCode).toBe(200);
+    expect((await local.inject({ method: "GET", url: "/api/session" })).json()).toEqual({
+      email: "local mode (no sign-in)",
+    });
+    expect((await local.inject({ method: "GET", url: "/api/auth/google" })).statusCode).toBe(404);
+    await local.close();
+    const exposed = loadSettings({ ...base, HACKEVAL_PUBLIC_URL: "https://judging.armoriq.io" });
+    await expect(buildApp({ settings: exposed, db: openDb(join(dir, "e.db")) })).rejects.toThrow(
+      /only runs with a localhost/,
+    );
+  });
+
   it("percent-encoded or oddly spelled API paths cannot skip auth", async () => {
     for (const url of ["/%61pi/hackathons", "/ap%69/hackathons", "/api/%68ackathons", "//api/hackathons"]) {
       const res = await app.inject({ method: "GET", url });
