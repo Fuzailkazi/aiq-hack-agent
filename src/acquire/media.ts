@@ -102,6 +102,20 @@ export const ytdlpDownload: VideoDownloader = (url, destDir, maxBytes) =>
     });
   });
 
+/** A hosted video's length in seconds from its metadata (no download), or null when it cannot be read. */
+export const ytdlpDuration = (url: string): Promise<number | null> =>
+  new Promise((resolve) => {
+    execFile(
+      "yt-dlp",
+      ["--skip-download", "--no-playlist", "--no-warnings", "--print", "duration", "--", url],
+      { timeout: 60_000 },
+      (error, stdout) => {
+        const seconds = Number.parseFloat(stdout.trim().split("\n").at(-1) ?? "");
+        resolve(!error && Number.isFinite(seconds) && seconds > 0 ? seconds : null);
+      },
+    );
+  });
+
 export async function fetchArtifact(
   ref: ArtifactRef,
   destDir: string,

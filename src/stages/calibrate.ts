@@ -15,6 +15,7 @@ import type { PrescreenResult } from "../schemas/evaluation";
 import type { ArmorIQEvidence, MediaDigest } from "../schemas/evidence";
 import { levelsById, type Scorecard } from "../schemas/findings";
 import type { JevDecision } from "../schemas/jev";
+import { applyPenalties, assessPenalties } from "../penalties";
 import { type Criterion, type Rubric, weightedScore } from "../schemas/rubric";
 import type { Submission } from "../schemas/submission";
 import { decideRoute, recompute } from "./route";
@@ -65,7 +66,7 @@ async function secondOpinion(
 }
 
 export async function calibrate(
-  _sub: Submission,
+  sub: Submission,
   card: Scorecard,
   media: MediaDigest,
   prescreen: PrescreenResult,
@@ -74,7 +75,9 @@ export async function calibrate(
   { rubric, policy, jev }: CalibrateDeps,
 ): Promise<CalibrationResult> {
   const levels = levelsById(card);
-  const autoScore = weightedScore(rubric, levels);
+  const rubricScore = weightedScore(rubric, levels);
+  const penalties = assessPenalties(rubric, sub, media, evidence);
+  const autoScore = applyPenalties(rubricScore, penalties);
   if (!jev) {
     // The route rules send every criterion without a second opinion to review, so this always lands with a human.
     const criteria = recompute(
@@ -85,6 +88,8 @@ export async function calibrate(
     const decision = decideRoute(criteria, rubric, policy, flags, gateFlags);
     return {
       criteria,
+      rubricScore,
+      penalties,
       autoScore,
       confidence: decision.confidence,
       route: decision.route,
@@ -114,6 +119,8 @@ export async function calibrate(
   const decision = decideRoute(criteria, rubric, policy, flags, gateFlags);
   return {
     criteria,
+    rubricScore,
+    penalties,
     autoScore,
     confidence: decision.confidence,
     route: decision.route,

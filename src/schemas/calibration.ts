@@ -14,8 +14,19 @@ export type CriterionCalibration = z.infer<typeof CriterionCalibrationSchema>;
 
 export const RouteSchema = z.enum(["accept", "review"]);
 
+export const PenaltySchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  points: z.number(),
+  detail: z.string(),
+});
+
 export const CalibrationResultSchema = z.object({
   criteria: z.array(CriterionCalibrationSchema).default([]),
+  /** The rubric's 0-100 score before deductions (null on results stored before deductions existed). */
+  rubricScore: z.number().nullable().default(null),
+  /** Deductions for missing requirements; autoScore = rubricScore minus these. */
+  penalties: z.array(PenaltySchema).default([]),
   autoScore: z.number(),
   confidence: z.number(),
   route: RouteSchema,

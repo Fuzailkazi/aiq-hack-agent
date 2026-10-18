@@ -38,12 +38,22 @@ export const CriterionSchema = z
   });
 export type Criterion = z.infer<typeof CriterionSchema>;
 
+/** A fixed deduction for a missing submission requirement (see src/penalties.ts for what each id checks). */
+export const PenaltyRuleSchema = z.object({
+  id: z.enum(["social_post", "hashtag", "video_length", "elevenlabs_code", "live_demo"]),
+  points: z.number().positive().max(100),
+  label: z.string().optional(),
+});
+export type PenaltyRule = z.infer<typeof PenaltyRuleSchema>;
+
 export const RubricSchema = z
   .object({
     id: slug,
     version: z.string().min(1),
     criteria: z.array(CriterionSchema).min(1),
     tracks: z.array(z.string()).default([]),
+    /** Points cut from the 0-100 score for requirements the team did not meet. */
+    penalties: z.array(PenaltyRuleSchema).default([]),
   })
   .superRefine((r, ctx) => {
     const ids = r.criteria.map((c) => c.id);

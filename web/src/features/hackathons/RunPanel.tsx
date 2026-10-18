@@ -1,16 +1,23 @@
-/** Start a pipeline run and follow it until it finishes. */
-import { IconPlay, IconRefresh } from "@shared/icons";
+/**
+ * Start a pipeline run and follow it until it finishes. Scoring goes one team at a time ("Score next team", or
+ * "Score this team" on a team's page) so judges can follow each result and model quota is spent deliberately.
+ */
+import { IconPlay } from "@shared/icons";
 import { Banner, Button, StatusBadge } from "@shared/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, type RunJob, unwrap } from "../../api/client";
 
-export function RunPanel({ hid }: { hid: string }) {
+export function RunPanel({ hid, submissionId }: { hid: string; submissionId?: string }) {
   const [runId, setRunId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const start = useMutation({
-    mutationFn: async (body: { phase: "gate" | "score" | "all"; retry?: boolean }) =>
-      unwrap(await api.POST("/api/hackathons/{hid}/runs", { params: { path: { hid } }, body })),
+    mutationFn: async (body: {
+      phase: "gate" | "score" | "all";
+      retry?: boolean;
+      only?: string[];
+      limit?: number;
+    }) => unwrap(await api.POST("/api/hackathons/{hid}/runs", { params: { path: { hid } }, body })),
     onSuccess: (job) => setRunId(job.id),
   });
   const run = useQuery({
@@ -18,7 +25,10 @@ export function RunPanel({ hid }: { hid: string }) {
     enabled: runId !== null,
     queryFn: async (): Promise<RunJob> => {
       const job = unwrap(await api.GET("/api/runs/{runId}", { params: { path: { runId: runId ?? "" } } }));
-      if (job.state !== "running") void queryClient.invalidateQueries({ queryKey: ["hackathon", hid] });
+      if (job.state !== "running") {
+        void queryClient.invalidateQueries({ queryKey: ["hackathon", hid] });
+        if (submissionId) void queryClient.invalidateQueries({ queryKey: ["submission", submissionId] });
+      }
       return job;
     },
     refetchInterval: (q) => (q.state.data?.state === "running" || !q.state.data ? 1000 : false),
@@ -29,28 +39,30 @@ export function RunPanel({ hid }: { hid: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="primary"
-          leading={IconPlay}
-          loading={running}
-          onClick={() => start.mutate({ phase: "all" })}
-        >
-          Run everything
-        </Button>
-        <Button variant="secondary" disabled={running} onClick={() => start.mutate({ phase: "gate" })}>
-          Gate only
-        </Button>
-        <Button variant="secondary" disabled={running} onClick={() => start.mutate({ phase: "score" })}>
-          Score only
-        </Button>
-        <Button
-          variant="tertiary"
-          leading={IconRefresh}
-          disabled={running}
-          onClick={() => start.mutate({ phase: "all", retry: true })}
-        >
-          Retry errors
-        </Button>
+        {submissionId ? (
+          <Button
+            variant="primary"
+            leading={IconPlay}
+            loading={running}
+            onClick={() => start.mutate({ phase: "score", only: [submissionId], retry: true })}
+          >
+            Score this team
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant="primary"
+              leading={IconPlay}
+              loading={running}
+              onClick={() => start.mutate({ phase: "score", limit: 1 })}
+            >
+              Score next team
+            </Button>
+            <Button variant="secondary" disabled={running} onClick={() => start.mutate({ phase: "gate" })}>
+              Check new teams (SDK gate)
+            </Button>
+          </>
+        )}
       </div>
       {start.isError && <Banner tone="bad">{start.error.message}</Banner>}
       {job && (

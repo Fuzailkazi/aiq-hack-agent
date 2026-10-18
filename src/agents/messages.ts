@@ -52,7 +52,7 @@ export function buildAnalystParts(
     if (video.remoteUri) {
       return [
         text(
-          "The team's demo video is attached as a link. Watch all of it (picture and sound); cite moments as mm:ss.",
+          `The team's demo video is attached as a link${video.durationS > 0 ? ` (${mmss(video.durationS)} long)` : ""}. Watch all of it (picture and sound); cite moments as mm:ss.`,
         ),
         text(fence(`Team: ${sub.teamName}`)),
         { fileData: { fileUri: video.remoteUri, mimeType: "video/*" } },

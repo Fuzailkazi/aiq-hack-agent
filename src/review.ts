@@ -8,6 +8,7 @@ import {
   type Status,
 } from "./schemas/evaluation";
 import { levelsById } from "./schemas/findings";
+import { applyPenalties } from "./penalties";
 import { criterion, levelIndex, type Rubric, weightedScore } from "./schemas/rubric";
 import type { DB } from "./store/db";
 import * as q from "./store/queries";
@@ -76,7 +77,8 @@ export function resolveReview(
       }
     }
     next = "finalized";
-    update.finalScore = weightedScore(rubric, levels);
+    // The judge re-levels criteria; the deductions for missing requirements still apply.
+    update.finalScore = applyPenalties(weightedScore(rubric, levels), evaluation.calibration?.penalties ?? []);
   } else {
     throw new ReviewError(`cannot apply decision '${decision}' to a submission in status '${status}'`);
   }

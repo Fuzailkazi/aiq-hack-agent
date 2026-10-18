@@ -161,6 +161,49 @@ describe("status reasons", () => {
   });
 });
 
+describe("scoring one team at a time", () => {
+  it("shows the rubric score, each deduction, and the result", async () => {
+    const data = submission("needs_review");
+    Object.assign(data.evaluation.calibration as object, {
+      rubricScore: 73.6,
+      penalties: [
+        { id: "social_post", label: "No X or LinkedIn post", points: 5, detail: "no link in the form" },
+      ],
+    });
+    mockApi({ "GET /api/submissions/s1": data, "GET /api/hackathons/h": HACKATHON });
+    renderAt("/s/s1");
+    const breakdown = await screen.findByTestId("score-breakdown");
+    expect(breakdown.textContent).toContain("Rubric score73.6");
+    expect(breakdown.textContent).toContain("No X or LinkedIn post (no link in the form)−5");
+  });
+
+  it("offers Score this team on a team that is waiting", async () => {
+    const data = submission("scoring");
+    Object.assign(data.evaluation, { scorecard: null });
+    mockApi({
+      "GET /api/submissions/s1": data,
+      "GET /api/hackathons/h": HACKATHON,
+      "POST /api/hackathons/h/runs": {
+        id: "r1",
+        hackathonId: "h",
+        state: "running",
+        report: null,
+        error: null,
+        startedAt: "2026-10-01T00:00:00Z",
+        finishedAt: null,
+      },
+    });
+    renderAt("/s/s1");
+    fireEvent.click(await screen.findByRole("button", { name: "Score this team" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/hackathons/h/runs")).toBe(true));
+    expect(calls.find((c) => c.path === "/api/hackathons/h/runs")?.body).toEqual({
+      phase: "score",
+      only: ["s1"],
+      retry: true,
+    });
+  });
+});
+
 describe("form sync", () => {
   it("shows the last sync and lists entries that could not be imported", async () => {
     mockApi({
@@ -237,7 +280,7 @@ describe("dashboard", () => {
       "GET /api/runs/r1": () => job(++polls > 1 ? "done" : "running"),
     });
     renderAt("/h/h");
-    fireEvent.click(await screen.findByRole("button", { name: "Run everything" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Score next team" }));
     await waitFor(() => expect(screen.getByText("Run done")).toBeTruthy(), { timeout: 4000 });
     expect(screen.getByText(/processed 3/)).toBeTruthy();
     expect(screen.getByText(/Add prices for gpt-5-mini/)).toBeTruthy();
