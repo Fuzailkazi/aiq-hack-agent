@@ -55,6 +55,16 @@ export const SettingsSchema = z.object({
    * otherwise). Anyone using this machine can open the UI; hosted deployments must use Google sign-in.
    */
   localOnly: bool.default(false),
+  /** The hackathon commands and the form sync act on by default. */
+  hackathon: z.string().nullable().default(null),
+  /** The form's responses sheet (the id in its URL), synced into `hackathon` by `serve` and `hackeval sync`. */
+  sheetId: z.string().nullable().default(null),
+  /** JSON key of a Google service account the sheet is shared with (viewer). */
+  serviceAccountFile: z.string().nullable().default(null),
+  /** Minutes between syncs while serving. */
+  syncIntervalMin: int(1).default(5),
+  /** Also score new teams after a sync (spends model quota); off: the sync only imports and gates. */
+  autoScore: bool.default(false),
   /** Where people reach the server; Google redirects back to <publicUrl>/api/auth/google/callback. */
   publicUrl: z.string().default("http://127.0.0.1:8000"),
 });
@@ -82,6 +92,11 @@ const ENV: Record<string, keyof Settings> = {
   HACKEVAL_SESSION_SECRET: "sessionSecret",
   HACKEVAL_PUBLIC_URL: "publicUrl",
   HACKEVAL_LOCAL_ONLY: "localOnly",
+  HACKEVAL_HACKATHON: "hackathon",
+  HACKEVAL_SHEET_ID: "sheetId",
+  GOOGLE_SERVICE_ACCOUNT_FILE: "serviceAccountFile",
+  HACKEVAL_SYNC_INTERVAL_MIN: "syncIntervalMin",
+  HACKEVAL_AUTO_SCORE: "autoScore",
 };
 
 export function loadSettings(

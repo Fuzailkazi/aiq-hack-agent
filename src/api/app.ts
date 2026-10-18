@@ -21,9 +21,10 @@ import { VERSION } from "../index";
 import type { BuildDeps } from "../pipeline/deps";
 import { buildProductionDeps } from "../pipeline/production";
 import { ReviewError } from "../review";
-import type { Settings } from "../settings";
+import { intakeOf, type Settings } from "../settings";
 import type { DB } from "../store/db";
 import * as q from "../store/queries";
+import { SheetSync } from "../sync";
 import {
   authHook,
   finishGoogleSignIn,
@@ -55,6 +56,10 @@ export interface AppOptions {
   /** Upload size limits (tests shrink them). */
   limits?: MediaLimits;
   logger?: boolean;
+  /** Start the periodic form sync (serve does; tests trigger it by hand). */
+  startSync?: boolean;
+  /** Fetch used by the form sync (tests fake Google). */
+  syncFetch?: typeof fetch;
   /** Token-endpoint fetch for Google sign-in (tests fake Google). */
   googleFetch?: typeof fetch;
 }
@@ -138,7 +143,18 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   });
 
   const jobs = new RunJobs(db, settings, opts.buildDeps ?? buildProductionDeps);
-  const ctx: ApiContext = { db, settings, jobs, limits };
+  const sync =
+    settings.sheetId && settings.serviceAccountFile && settings.hackathon
+      ? new SheetSync(settings.hackathon, {
+          db,
+          settings,
+          mapping: intakeOf(settings),
+          fetchImpl: opts.syncFetch,
+          startRun: (hid, phase) => (jobs.active(hid) ? null : jobs.start(hid, { phase }).id),
+        })
+      : null;
+  if (sync && opts.startSync) sync.start(settings.syncIntervalMin);
+  const ctx: ApiContext = { db, settings, jobs, limits, sync };
 
   app.get("/api/health", { schema: { hide: true } }, async () => ({ ok: true, version: VERSION }));
   const cookieBase = { httpOnly: true, path: "/", secure: secureCookies } as const;
@@ -215,6 +231,9 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
     if (webDist && req.method === "GET" && !req.url.startsWith("/api/")) return reply.sendFile("index.html");
     return reply.code(404).send({ error: "not found" });
   });
-  app.addHook("onClose", async () => jobs.drain());
+  app.addHook("onClose", async () => {
+    sync?.stop();
+    await jobs.drain();
+  });
   return app;
 }

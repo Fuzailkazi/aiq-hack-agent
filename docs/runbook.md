@@ -38,6 +38,11 @@ Anything the scanner cannot follow goes to Jev or a human, never to an automatic
    - **Laptop only, before the OAuth client exists:** `HACKEVAL_LOCAL_ONLY=true` skips sign-in. The server then refuses to start unless it binds to 127.0.0.1/localhost and `HACKEVAL_PUBLIC_URL` is localhost, so it cannot be exposed by mistake; anyone using that machine can open it;
    - `HACKEVAL_ALLOWED_EMAILS`: who may sign in (default `fuzail@armoriq.io,isha@armoriq.io`). Google must report the address as verified, and anyone else is turned away;
    - optionally `GITHUB_TOKEN` to clone private repos.
+   - **Automatic form sync (optional, recommended):** new Google Form entries are pulled in every few minutes, imported, and run through the SDK gate. One-time setup:
+     1. In Google Cloud Console, enable the **Google Drive API** and create a **service account** (IAM & Admin > Service accounts); add a JSON key and save it outside the repo, e.g. `~/.config/hackeval/service-account.json`.
+     2. Open the form's responses sheet, click **Share**, and add the service account's email (`…@….iam.gserviceaccount.com`) as a **Viewer**. The sheet stays private.
+     3. Set `HACKEVAL_SHEET_ID` (the id in the sheet's URL), `GOOGLE_SERVICE_ACCOUNT_FILE` (the key's path) and `HACKEVAL_HACKATHON`. Optional: `HACKEVAL_SYNC_INTERVAL_MIN` (default 5) and `HACKEVAL_AUTO_SCORE=true` to also score new teams (spends model quota).
+     `serve` then syncs on that interval (the dashboard shows the last sync and entries it could not import, with a Sync now button); `hackeval sync` does one sync from the command line.
 2. **Choose the LLM provider.** Set `HACKEVAL_LLM_PROVIDER=gemini` or `openai`. Model ids per role live in `config/models.yaml`. Run `hackeval models` to print the active set.
 3. **Run it** in one of two ways:
    - **Docker:** `docker compose up -d`, then open http://127.0.0.1:8000.

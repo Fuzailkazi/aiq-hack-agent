@@ -7,6 +7,7 @@ import { RubricSchema } from "../../schemas/rubric";
 import { reviewQueue } from "../../service";
 import { modelsOf } from "../../settings";
 import * as q from "../../store/queries";
+import { readSyncStatus } from "../../sync";
 import { usageReport } from "../../usage";
 import type { ApiContext } from "../context";
 import {
@@ -18,11 +19,40 @@ import {
   QueueItemSchema,
   RubricActivatedSchema,
   RubricUploadSchema,
+  SyncInfoSchema,
+  SyncStatusSchema,
 } from "../schemas";
 
 export const hackathonRoutes =
-  ({ db, settings }: ApiContext): FastifyPluginAsyncZod =>
+  ({ db, settings, sync }: ApiContext): FastifyPluginAsyncZod =>
   async (app) => {
+    app.get(
+      "/api/hackathons/:hid/sync",
+      { schema: { params: HidParams, response: { 200: SyncInfoSchema } } },
+      async (req) => {
+        const id = q.getHackathon(db, req.params.hid).id;
+        return {
+          configured: sync?.hackathonId === id,
+          intervalMin: settings.syncIntervalMin,
+          autoScore: settings.autoScore,
+          last: readSyncStatus(settings.workspace, id),
+        };
+      },
+    );
+
+    app.post(
+      "/api/hackathons/:hid/sync",
+      { schema: { params: HidParams, response: { 200: SyncStatusSchema } } },
+      async (req) => {
+        const id = q.getHackathon(db, req.params.hid).id;
+        if (!sync || sync.hackathonId !== id)
+          throw new q.StatusConflict(
+            `'${id}' is not linked to a form; set HACKEVAL_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_FILE and HACKEVAL_HACKATHON=${id}`,
+          );
+        return sync.now();
+      },
+    );
+
     app.get("/api/hackathons", { schema: { response: { 200: z.array(HackathonSchema) } } }, async () =>
       q.listHackathons(db),
     );

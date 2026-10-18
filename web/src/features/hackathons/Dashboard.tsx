@@ -20,6 +20,7 @@ import { ScoreBar, trackLabel } from "../../shared/Score";
 import { StatCell } from "../../shared/StatCell";
 import { StatusPill } from "../../shared/status";
 import { AppShell } from "../../shell/AppShell";
+import { FormSyncPanel } from "./FormSyncPanel";
 import { RunPanel } from "./RunPanel";
 import { useHackathon } from "./useHackathon";
 
@@ -224,6 +225,8 @@ export function Dashboard() {
           </div>
 
           <div className="flex flex-col gap-5.5">
+            <FormSyncPanel hid={hid} />
+
             <Panel title="Rubric" icon={IconScroll} count={rubric?.criteria.length}>
               {rubric ? (
                 <ul className="mb-4 flex flex-col gap-3">

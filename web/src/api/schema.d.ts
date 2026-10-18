@@ -58,6 +58,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/hackathons/{hid}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    hid: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            configured: boolean;
+                            intervalMin: number;
+                            autoScore: boolean;
+                            last: {
+                                hackathonId: string;
+                                at: string;
+                                ok: boolean;
+                                created: number;
+                                updated: number;
+                                unchanged: number;
+                                skipped: string[];
+                                error: string | null;
+                                runId: string | null;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    hid: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            hackathonId: string;
+                            at: string;
+                            ok: boolean;
+                            created: number;
+                            updated: number;
+                            unchanged: number;
+                            skipped: string[];
+                            error: string | null;
+                            runId: string | null;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/hackathons": {
         parameters: {
             query?: never;

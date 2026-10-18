@@ -47,6 +47,170 @@
         }
       }
     },
+    "/api/hackathons/{hid}/sync": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "configured": {
+                      "type": "boolean"
+                    },
+                    "intervalMin": {
+                      "type": "number"
+                    },
+                    "autoScore": {
+                      "type": "boolean"
+                    },
+                    "last": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "hackathonId": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "created": {
+                          "type": "number"
+                        },
+                        "updated": {
+                          "type": "number"
+                        },
+                        "unchanged": {
+                          "type": "number"
+                        },
+                        "skipped": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "error": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "runId": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "hackathonId",
+                        "at",
+                        "ok",
+                        "created",
+                        "updated",
+                        "unchanged",
+                        "skipped",
+                        "error",
+                        "runId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "configured",
+                    "intervalMin",
+                    "autoScore",
+                    "last"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "hid",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hackathonId": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "created": {
+                      "type": "number"
+                    },
+                    "updated": {
+                      "type": "number"
+                    },
+                    "unchanged": {
+                      "type": "number"
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "runId": {
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "hackathonId",
+                    "at",
+                    "ok",
+                    "created",
+                    "updated",
+                    "unchanged",
+                    "skipped",
+                    "error",
+                    "runId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hackathons": {
       "get": {
         "responses": {
