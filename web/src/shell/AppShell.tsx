@@ -4,9 +4,11 @@
  */
 import { IconChart, IconEye, IconGauge, IconRows, IconUpload } from "@shared/icons";
 import { Breadcrumb, Button, SegmentedControl, TabRail, Tabs } from "@shared/ui";
+import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 import { useNavigate } from "react-router";
+import { api } from "../api/client";
 import { Brand } from "./Brand";
 import { type Theme, useTheme } from "./theme";
 
@@ -42,6 +44,12 @@ export function AppShell({
   const navigate = useNavigate();
   const signOut = useContext(SignOutContext);
   const [theme, setTheme] = useTheme();
+  const session = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => (await api.GET("/api/session")).data ?? null,
+    staleTime: 300_000,
+  });
+  const email = session.data?.email;
   const go = (key: string) => {
     const s = SECTIONS.find((x) => x.key === key);
     if (s && hid) navigate(`/h/${hid}${s.path}`);
@@ -71,6 +79,11 @@ export function AppShell({
               { value: "dark", label: "Dark" },
             ]}
           />
+          {email && (
+            <span className="text-aq-xs text-aq-ink-muted truncate text-center" title={email}>
+              Signed in as {email}
+            </span>
+          )}
           <Button variant="ghost" size="sm" onClick={signOut}>
             Sign out
           </Button>

@@ -141,6 +141,17 @@ describe.skipIf(!hasFfmpeg())("ingestMedia", () => {
     }
   });
 
+  it("a model outage while transcribing fails the run instead of blaming the team's video", async () => {
+    const quota = {
+      transcribe: async (): Promise<TranscriptSegment[]> => {
+        throw new Error('{"error":{"code":429,"message":"You exceeded your current quota"}}');
+      },
+    };
+    await expect(
+      ingestMedia(sub("s-quota", null, video), { workspace: tempDir(), transcriber: quota, limits: LIMITS }),
+    ).rejects.toThrow(/429/);
+  });
+
   it("treats absent artifacts as fine", async () => {
     const media = await ingestMedia(sub("s1", null, null), {
       workspace: tempDir(),

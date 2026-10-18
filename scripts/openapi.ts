@@ -7,7 +7,11 @@ import { loadSettings } from "../src/settings";
 import { openDb } from "../src/store/db";
 
 const workspace = mkdtempSync(join(tmpdir(), "hackeval-spec-"));
-const settings = loadSettings({ HACKEVAL_ADMIN_TOKEN: "spec-only", HACKEVAL_WORKSPACE: workspace });
+const settings = loadSettings({
+  GOOGLE_OAUTH_CLIENT_ID: "spec-only",
+  GOOGLE_OAUTH_CLIENT_SECRET: "spec-only",
+  HACKEVAL_WORKSPACE: workspace,
+});
 const app = await buildApp({ settings, db: openDb(":memory:") });
 await app.ready();
 writeFileSync(new URL("../web/openapi.json", import.meta.url), `${JSON.stringify(app.swagger(), null, 2)}\n`);

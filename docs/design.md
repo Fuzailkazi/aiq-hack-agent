@@ -116,7 +116,7 @@ hackathon-project-evaluator/        # Python (retired; archived as a git bundle)
 │                                   # pydantic-settings · sqlalchemy 2 · typer · fastapi · uvicorn · python-multipart
 │                                   # httpx · python-pptx · pypdfium2 · yt-dlp · tree-sitter-language-pack · pyyaml
 ├── .env.example                    # GOOGLE_API_KEY, OPENAI_API_KEY, TYPESAFE_API_KEY, GITHUB_TOKEN,
-│                                   # HACKEVAL_LLM_PROVIDER, HACKEVAL_ADMIN_TOKEN
+│                                   # HACKEVAL_LLM_PROVIDER, HACKEVAL_ALLOWED_EMAILS
 ├── Dockerfile · docker-compose.yml # python + git + ffmpeg + libreoffice; builds web/ and serves it from FastAPI
 ├── README.md · docs/design.md · docs/spikes.md
 ├── config/

@@ -9,6 +9,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { checkLiveDemo } from "../acquire/liveDemo";
 import { type FetchOptions, fetchArtifact, type VideoDownloader } from "../acquire/media";
+import { TRANSIENT } from "../agents/run";
 import {
   type DeckDigest,
   DeckDigestSchema,
@@ -207,6 +208,9 @@ export async function ingestMedia(sub: Submission, opts: IngestOptions): Promise
           async (outDir) => redactDeep(await digestVideo(path, outDir, opts.transcriber, limits, cpu)),
         );
       } catch (e) {
+        // A model outage during transcription (quota, overload, network) is ours, not the team's video: fail the
+        // run so it is retried, instead of asking an organizer to fix the video.
+        if (TRANSIENT.test(e instanceof Error ? e.message : String(e))) throw e;
         unreachable.video = `video could not be read: ${(e instanceof Error ? e.message : String(e)).replace(/^could not read video: /, "")}`;
       }
     }

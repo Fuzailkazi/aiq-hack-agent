@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../../src/api/app";
+import { sessionCookie, sign } from "../../src/api/auth";
 import { DEFAULT_LIMITS } from "../../src/digest/media";
 import { EvaluationSchema } from "../../src/schemas/evaluation";
 import { MediaDigestSchema } from "../../src/schemas/evidence";
@@ -13,13 +14,24 @@ import { fakeDeps } from "../fakes";
 import { tempDir } from "../helpers";
 import { FIXTURE, SCRIPT } from "../scenario";
 
-const TOKEN = "s3cret-admin-token";
+const SESSION_SECRET = "test-session-secret";
+const CLIENT_ID = "test-client.apps.googleusercontent.com";
 const RUBRIC_YAML = readFileSync("config/rubrics/example_rubric.yaml", "utf8");
 let app: FastifyInstance;
 let settings: Settings;
 let dir: string;
 
-const auth = { authorization: `Bearer ${TOKEN}` };
+const auth = { cookie: `hackeval_session=${sessionCookie(SESSION_SECRET, "fuzail@armoriq.io")}` };
+/** A Google token endpoint that answers with an ID token carrying these claims. */
+const idToken = (claims: Record<string, unknown>) =>
+  ["e30", Buffer.from(JSON.stringify(claims)).toString("base64url"), "sig"].join(".");
+let googleClaims: Record<string, unknown> = {};
+const googleFetch = (async (_url: string | URL | Request, init?: RequestInit) => {
+  const body = new URLSearchParams(String(init?.body));
+  if (body.get("client_secret") !== "test-secret" || !body.get("code_verifier"))
+    return new Response("{}", { status: 400 });
+  return new Response(JSON.stringify({ id_token: idToken(googleClaims) }), { status: 200 });
+}) as typeof fetch;
 const api = (method: "GET" | "POST" | "PUT" | "DELETE", url: string, payload?: object) =>
   app.inject({ method, url, headers: auth, payload });
 const form = (fields: Record<string, string | Blob>, files: Record<string, string> = {}) => {
@@ -55,12 +67,15 @@ beforeEach(async () => {
   settings = loadSettings({
     HACKEVAL_DB_PATH: join(dir, "api.db"),
     HACKEVAL_WORKSPACE: join(dir, "ws"),
-    HACKEVAL_ADMIN_TOKEN: TOKEN,
+    GOOGLE_OAUTH_CLIENT_ID: CLIENT_ID,
+    GOOGLE_OAUTH_CLIENT_SECRET: "test-secret",
+    HACKEVAL_SESSION_SECRET: SESSION_SECRET,
   });
   app = await buildApp({
     settings,
     db: openDb(settings.dbPath),
     buildDeps: (s, rubric) => fakeDeps(rubric, policyOf(s), SCRIPT),
+    googleFetch,
   });
 });
 afterEach(async () => {
@@ -68,10 +83,111 @@ afterEach(async () => {
 });
 
 describe("API auth", () => {
-  it("refuses to start without an admin token", async () => {
+  const valid = (email = "isha@armoriq.io") => ({
+    iss: "https://accounts.google.com",
+    aud: CLIENT_ID,
+    exp: Math.floor(Date.now() / 1000) + 600,
+    email,
+    email_verified: true,
+  });
+
+  /** Start sign-in, then come back from Google with the given state (default: the one we were sent with). */
+  async function signIn(claims: Record<string, unknown>, tamperState = false) {
+    googleClaims = claims;
+    const start = await app.inject({ method: "GET", url: "/api/auth/google" });
+    expect(start.statusCode).toBe(302);
+    const google = new URL(String(start.headers.location));
+    expect(google.origin + google.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
+    expect(google.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(google.searchParams.get("redirect_uri")).toBe("http://127.0.0.1:8000/api/auth/google/callback");
+    const oauth = start.cookies.find((c) => c.name === "hackeval_oauth");
+    const state = tamperState ? "forged" : (google.searchParams.get("state") ?? "");
+    return app.inject({
+      method: "GET",
+      url: `/api/auth/google/callback?code=abc&state=${state}`,
+      cookies: { hackeval_oauth: oauth?.value ?? "" },
+    });
+  }
+
+  it("refuses to start without Google sign-in configured", async () => {
     const open = loadSettings({ HACKEVAL_DB_PATH: join(dir, "x.db"), HACKEVAL_WORKSPACE: join(dir, "ws") });
     await expect(buildApp({ settings: open, db: openDb(open.dbPath) })).rejects.toThrow(
-      "HACKEVAL_ADMIN_TOKEN",
+      "GOOGLE_OAUTH_CLIENT_ID",
+    );
+  });
+
+  it("only the allowlisted emails get in (fuzail@ and isha@ by default)", async () => {
+    const ok = await signIn(valid("Isha@ArmorIQ.io"));
+    expect(ok.statusCode).toBe(302);
+    expect(ok.headers.location).toBe("/");
+    const cookie = ok.cookies.find((c) => c.name === "hackeval_session");
+    expect(cookie?.httpOnly).toBe(true);
+    const me = await app.inject({
+      method: "GET",
+      url: "/api/session",
+      cookies: { hackeval_session: cookie?.value ?? "" },
+    });
+    expect(me.json()).toEqual({ email: "isha@armoriq.io" });
+
+    const outsider = await signIn(valid("someone@gmail.com"));
+    expect(outsider.headers.location).toMatch(/^\/\?signin_error=.*not%20allowed/);
+    expect(outsider.cookies.find((c) => c.name === "hackeval_session")).toBeUndefined();
+  });
+
+  it("rejects a forged state, an unverified email, another app's token and a non-Google issuer", async () => {
+    for (const [claims, tamper] of [
+      [valid(), true],
+      [{ ...valid(), email_verified: false }, false],
+      [{ ...valid(), aud: "someone-else" }, false],
+      [{ ...valid(), iss: "https://evil.example" }, false],
+      [{ ...valid(), exp: Math.floor(Date.now() / 1000) - 10 }, false],
+    ] as const) {
+      const res = await signIn(claims, tamper);
+      expect(res.headers.location, JSON.stringify(claims)).toMatch(/^\/\?signin_error=/);
+      expect(res.cookies.find((c) => c.name === "hackeval_session")).toBeUndefined();
+    }
+  });
+
+  it("there is no token: forged, expired or bearer credentials are refused", async () => {
+    expect((await app.inject({ method: "GET", url: "/api/health" })).statusCode).toBe(200);
+    expect((await app.inject({ method: "GET", url: "/api/hackathons" })).statusCode).toBe(401);
+    const bearer = await app.inject({
+      method: "GET",
+      url: "/api/hackathons",
+      headers: { authorization: `Bearer ${SESSION_SECRET}` },
+    });
+    expect(bearer.statusCode).toBe(401);
+    for (const value of [
+      sessionCookie("another-secret", "fuzail@armoriq.io"),
+      sign(SESSION_SECRET, { email: "fuzail@armoriq.io", exp: Math.floor(Date.now() / 1000) - 1 }),
+      "garbage",
+    ]) {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/hackathons",
+        cookies: { hackeval_session: value },
+      });
+      expect(res.statusCode).toBe(401);
+    }
+    expect((await api("GET", "/api/hackathons")).statusCode).toBe(200);
+  });
+
+  it("local-only mode skips sign-in on localhost and refuses any other public URL", async () => {
+    const base = {
+      HACKEVAL_DB_PATH: join(dir, "l.db"),
+      HACKEVAL_WORKSPACE: join(dir, "ws"),
+      HACKEVAL_LOCAL_ONLY: "true",
+    };
+    const local = await buildApp({ settings: loadSettings(base), db: openDb(join(dir, "l.db")) });
+    expect((await local.inject({ method: "GET", url: "/api/hackathons" })).statusCode).toBe(200);
+    expect((await local.inject({ method: "GET", url: "/api/session" })).json()).toEqual({
+      email: "local mode (no sign-in)",
+    });
+    expect((await local.inject({ method: "GET", url: "/api/auth/google" })).statusCode).toBe(404);
+    await local.close();
+    const exposed = loadSettings({ ...base, HACKEVAL_PUBLIC_URL: "https://judging.armoriq.io" });
+    await expect(buildApp({ settings: exposed, db: openDb(join(dir, "e.db")) })).rejects.toThrow(
+      /only runs with a localhost/,
     );
   });
 
@@ -82,33 +198,6 @@ describe("API auth", () => {
     }
     const create = await app.inject({ method: "POST", url: "/%61pi/hackathons", payload: { id: "x" } });
     expect(create.statusCode).toBe(401);
-  });
-
-  it("health is public; everything else needs the bearer token or the session cookie", async () => {
-    expect((await app.inject({ method: "GET", url: "/api/health" })).statusCode).toBe(200);
-    expect((await app.inject({ method: "GET", url: "/api/hackathons" })).statusCode).toBe(401);
-    const wrong = await app.inject({
-      method: "GET",
-      url: "/api/hackathons",
-      headers: { authorization: "Bearer nope" },
-    });
-    expect(wrong.statusCode).toBe(401);
-    expect((await api("GET", "/api/hackathons")).statusCode).toBe(200);
-
-    expect(
-      (await app.inject({ method: "POST", url: "/api/session", payload: { token: "nope" } })).statusCode,
-    ).toBe(401);
-    const login = await app.inject({ method: "POST", url: "/api/session", payload: { token: TOKEN } });
-    expect(login.statusCode).toBe(204);
-    const cookie = login.cookies.find((c) => c.name === "hackeval_session");
-    expect(cookie?.httpOnly).toBe(true);
-    expect(cookie?.sameSite).toBe("Strict");
-    const viaCookie = await app.inject({
-      method: "GET",
-      url: "/api/hackathons",
-      cookies: { hackeval_session: cookie?.value ?? "" },
-    });
-    expect(viaCookie.statusCode).toBe(200);
   });
 });
 

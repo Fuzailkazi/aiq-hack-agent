@@ -1,4 +1,6 @@
 /** The Fastify app: auth, OpenAPI, the JSON API under /api, media, and (when built) the React UI at /. */
+
+import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import fastifyCookie from "@fastify/cookie";
@@ -22,7 +24,21 @@ import { ReviewError } from "../review";
 import type { Settings } from "../settings";
 import type { DB } from "../store/db";
 import * as q from "../store/queries";
-import { authHook, SESSION_COOKIE, tokenMatches } from "./auth";
+import {
+  authHook,
+  finishGoogleSignIn,
+  type GoogleAuthConfig,
+  isLoopbackUrl,
+  LOCAL_ONLY_USER,
+  OAUTH_COOKIE,
+  parseAllowlist,
+  SESSION_COOKIE,
+  SESSION_TTL_S,
+  SignInRejected,
+  sessionCookie,
+  sessionEmail,
+  startGoogleSignIn,
+} from "./auth";
 import type { ApiContext } from "./context";
 import { RunJobs } from "./jobs";
 import { hackathonRoutes } from "./routes/hackathons";
@@ -39,6 +55,26 @@ export interface AppOptions {
   /** Upload size limits (tests shrink them). */
   limits?: MediaLimits;
   logger?: boolean;
+  /** Token-endpoint fetch for Google sign-in (tests fake Google). */
+  googleFetch?: typeof fetch;
+}
+
+/** Google sign-in settings, or a clear error saying what to set. */
+export function googleAuthConfig(settings: Settings): GoogleAuthConfig {
+  if (!settings.googleClientId || !settings.googleClientSecret)
+    throw new Error(
+      "set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to serve the UI (sign in with Google; see docs/runbook.md)",
+    );
+  const allowedEmails = parseAllowlist(settings.allowedEmails);
+  if (!allowedEmails.size) throw new Error("HACKEVAL_ALLOWED_EMAILS lists no one, so nobody could sign in");
+  return {
+    clientId: settings.googleClientId,
+    clientSecret: settings.googleClientSecret,
+    allowedEmails,
+    // Without a configured secret, sessions simply end when the server restarts.
+    sessionSecret: settings.sessionSecret ?? randomBytes(32).toString("hex"),
+    publicUrl: settings.publicUrl,
+  };
 }
 
 function statusFor(err: unknown): number {
@@ -52,9 +88,12 @@ function statusFor(err: unknown): number {
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   const { settings, db } = opts;
-  const token = settings.adminToken;
-  if (!token)
-    throw new Error("set HACKEVAL_ADMIN_TOKEN to serve the API (the UI and API always require auth)");
+  if (settings.localOnly && !isLoopbackUrl(settings.publicUrl))
+    throw new Error(
+      `HACKEVAL_LOCAL_ONLY skips sign-in, so it only runs with a localhost HACKEVAL_PUBLIC_URL (got ${settings.publicUrl}); use Google sign-in instead`,
+    );
+  const google = settings.localOnly ? null : googleAuthConfig(settings);
+  const secureCookies = settings.publicUrl.startsWith("https://");
   const webDist =
     opts.webDist && existsSync(resolve(opts.webDist, "index.html")) ? resolve(opts.webDist) : null;
 
@@ -74,8 +113,8 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(fastifySwagger, {
     openapi: {
       info: { title: "hackeval API", version: VERSION },
-      components: { securitySchemes: { bearer: { type: "http", scheme: "bearer" } } },
-      security: [{ bearer: [] }],
+      components: { securitySchemes: { session: { type: "apiKey", in: "cookie", name: SESSION_COOKIE } } },
+      security: [{ session: [] }],
     },
     transform: jsonSchemaTransform,
   });
@@ -85,7 +124,7 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
     serve: Boolean(webDist),
   });
 
-  app.addHook("onRequest", authHook(token));
+  if (google) app.addHook("onRequest", authHook(google.sessionSecret));
   app.setErrorHandler((err, req, reply) => {
     if (hasZodFastifySchemaValidationErrors(err))
       return reply.code(400).send({ error: "invalid request", issues: err.validation });
@@ -102,18 +141,66 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   const ctx: ApiContext = { db, settings, jobs, limits };
 
   app.get("/api/health", { schema: { hide: true } }, async () => ({ ok: true, version: VERSION }));
-  app.post("/api/session", { schema: { body: z.object({ token: z.string() }) } }, async (req, reply) => {
-    if (!tokenMatches(req.body.token, token)) return reply.code(401).send({ error: "unauthorized" });
-    return reply
-      .setCookie(SESSION_COOKIE, token, {
-        httpOnly: true,
-        sameSite: "strict",
-        path: "/",
-        secure: req.protocol === "https",
-      })
-      .code(204)
-      .send();
-  });
+  const cookieBase = { httpOnly: true, path: "/", secure: secureCookies } as const;
+  app.get("/api/auth/config", { schema: { hide: true } }, async () => ({
+    provider: google ? "google" : "local",
+    // Who to ask for access, without listing everyone.
+    contact: google ? ([...google.allowedEmails][0] ?? null) : null,
+  }));
+  if (google) {
+    app.get("/api/auth/google", { schema: { hide: true } }, async (_req, reply) => {
+      const { url, cookie } = startGoogleSignIn(google);
+      // Lax, not Strict: the cookie must come back on Google's top-level redirect to the callback.
+      return reply
+        .setCookie(OAUTH_COOKIE, cookie, { ...cookieBase, sameSite: "lax", maxAge: 600 })
+        .redirect(url);
+    });
+    app.get(
+      "/api/auth/google/callback",
+      {
+        schema: {
+          hide: true,
+          querystring: z.object({
+            code: z.string().optional(),
+            state: z.string().optional(),
+            error: z.string().optional(),
+          }),
+        },
+      },
+      async (req, reply) => {
+        reply.clearCookie(OAUTH_COOKIE, { path: "/" });
+        try {
+          const email = await finishGoogleSignIn(
+            google,
+            req.query,
+            req.cookies[OAUTH_COOKIE],
+            opts.googleFetch,
+          );
+          req.log.info({ email }, "signed in");
+          return reply
+            .setCookie(SESSION_COOKIE, sessionCookie(google.sessionSecret, email), {
+              ...cookieBase,
+              sameSite: "lax",
+              maxAge: SESSION_TTL_S,
+            })
+            .redirect("/");
+        } catch (e) {
+          const message = e instanceof SignInRejected ? e.message : "sign-in failed";
+          if (!(e instanceof SignInRejected)) req.log.error(e);
+          return reply.redirect(`/?signin_error=${encodeURIComponent(message)}`);
+        }
+      },
+    );
+  }
+  app.get(
+    "/api/session",
+    { schema: { response: { 200: z.object({ email: z.string() }) } } },
+    async (req) => ({
+      email: google
+        ? (sessionEmail(google.sessionSecret, req.cookies[SESSION_COOKIE]) ?? "")
+        : LOCAL_ONLY_USER,
+    }),
+  );
   app.delete("/api/session", {}, async (_req, reply) =>
     reply.clearCookie(SESSION_COOKIE, { path: "/" }).code(204).send(),
   );

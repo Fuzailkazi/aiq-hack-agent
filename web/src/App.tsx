@@ -54,10 +54,6 @@ function Routed() {
 export function App({ queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }) }) {
   const [authed, setAuthed] = useState(true);
   useEffect(() => setUnauthorizedHandler(() => setAuthed(false)), []);
-  const login = () => {
-    queryClient.clear();
-    setAuthed(true);
-  };
   const logout = async () => {
     await api.DELETE("/api/session");
     queryClient.clear();
@@ -66,7 +62,7 @@ export function App({ queryClient = new QueryClient({ defaultOptions: { queries:
   return (
     <QueryClientProvider client={queryClient}>
       <SignOutContext.Provider value={() => void logout()}>
-        <BrowserRouter>{authed ? <Routed /> : <Login onLogin={login} />}</BrowserRouter>
+        <BrowserRouter>{authed ? <Routed /> : <Login />}</BrowserRouter>
       </SignOutContext.Provider>
     </QueryClientProvider>
   );

@@ -124,10 +124,18 @@ describe("hackeval CLI", () => {
     expect(report.errors).toEqual([]);
   });
 
-  it("serve refuses to start without an admin token", async () => {
+  it("serve refuses to start without Google sign-in configured", async () => {
     const result = await cli("serve", "--port", "0");
     expect(result.code).toBe(1);
-    expect(result.err).toContain("HACKEVAL_ADMIN_TOKEN");
+    expect(result.err).toContain("GOOGLE_OAUTH_CLIENT_ID");
+  });
+
+  it("local-only mode will not bind to a public interface", async () => {
+    const result = await runCli(["serve", "--host", "0.0.0.0", "--port", "0"], {
+      env: { ...env, HACKEVAL_LOCAL_ONLY: "true" },
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toContain("only binds to 127.0.0.1");
   });
 
   it("rejects naive deadlines and bad repo URLs", async () => {

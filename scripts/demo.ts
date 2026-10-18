@@ -1,7 +1,7 @@
 /**
  * Seed a demo hackathon you can click through in the UI without any API keys: the fixture submissions run through
  * the real pipeline (gate, routing, review queue, leaderboard) with offline stand-ins for the LLM and Jev stages,
- * real rendered slides and a generated demo video. Then: `HACKEVAL_ADMIN_TOKEN=… npm run demo:serve`.
+ * real rendered slides and a generated demo video. Then (with GOOGLE_OAUTH_* set): `npm run demo:serve`.
  */
 import { copyFileSync, mkdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
