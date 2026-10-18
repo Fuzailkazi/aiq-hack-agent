@@ -161,6 +161,37 @@ describe("status reasons", () => {
   });
 });
 
+describe("form sync", () => {
+  it("shows the last sync and lists entries that could not be imported", async () => {
+    mockApi({
+      "GET /api/hackathons/h": HACKATHON,
+      "GET /api/hackathons/h/submissions": [],
+      "GET /api/hackathons/h/sync": {
+        configured: true,
+        intervalMin: 5,
+        autoScore: false,
+        last: {
+          hackathonId: "h",
+          at: new Date().toISOString(),
+          ok: true,
+          created: 43,
+          updated: 4,
+          unchanged: 9,
+          skipped: ["row 164 (Ghost): repo_url must be a repository URL"],
+          error: null,
+          runId: "r1",
+        },
+      },
+    });
+    renderAt("/h/h");
+    expect((await screen.findByTestId("sync-status")).textContent).toContain(
+      "43 new · 4 updated · 9 unchanged",
+    );
+    expect(screen.getByText("row 164 (Ghost): repo_url must be a repository URL")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sync now" })).toBeTruthy();
+  });
+});
+
 describe("leaderboard", () => {
   it("ranks each track in its own panel", async () => {
     const row = (track: string | null, rank: number, teamName: string, finalScore: number) => ({

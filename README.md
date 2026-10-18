@@ -47,6 +47,7 @@ npm run hackeval -- run
 - **Requirements checklist** (per team, in the UI): ArmorIQ SDK gate, ElevenLabs actually in the code (ElevenLabs track; found by manifest or import, so "used it only for the video narration" shows as a warning), demo video watchable, live demo online, X/LinkedIn post with #FlowStateHackathon, ArmorTools Pro.
 - **The agents know the form's rules:** the video analyst flags videos far outside 3 to 5 minutes; the form analyst compares partner claims with the repo scan.
 - **Free-tier Gemini:** set `HACKEVAL_LLM_CONCURRENCY=1` (video calls are large); rate limits (429), overload (503) and dropped connections are retried with backoff, and a failed run says so in plain words ("Not scored yet: the Gemini rate limit was reached").
+- **Form sync:** link the responses sheet once (`HACKEVAL_SHEET_ID` + a service account it is shared with) and `serve` pulls new entries every 5 minutes, imports them and runs the SDK gate; `hackeval sync` does it on demand.
 - **Loom/Vimeo videos** need `yt-dlp` (`brew install yt-dlp`); YouTube does not.
 
 **Commands:**

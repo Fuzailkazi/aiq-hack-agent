@@ -137,3 +137,23 @@ export const LeaderboardRowSchema = z.object({
 export const HidParams = z.object({ hid: z.string() });
 export const IdParams = z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/) });
 export const MediaParams = IdParams.extend({ index: z.coerce.number().int().min(0) });
+
+export const SyncStatusSchema = z.object({
+  hackathonId: z.string(),
+  at: z.string(),
+  ok: z.boolean(),
+  created: z.number(),
+  updated: z.number(),
+  unchanged: z.number(),
+  skipped: z.array(z.string()),
+  error: z.string().nullable(),
+  runId: z.string().nullable(),
+});
+
+export const SyncInfoSchema = z.object({
+  /** True when this hackathon is linked to a form sheet. */
+  configured: z.boolean(),
+  intervalMin: z.number(),
+  autoScore: z.boolean(),
+  last: SyncStatusSchema.nullable(),
+});

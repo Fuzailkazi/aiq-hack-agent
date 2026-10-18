@@ -249,7 +249,10 @@ export function importCsv(
     try {
       sub = rowToSubmission(hackathonId, record, mapping, dirname(resolve(csvPath)), now);
     } catch (e) {
-      report.errors.push(`row ${info.lines}: ${e instanceof Error ? firstIssue(e) : String(e)}`);
+      const team = (record[mapping.teamName] ?? "").trim();
+      report.errors.push(
+        `row ${info.lines}${team ? ` (${team})` : ""}: ${e instanceof Error ? firstIssue(e) : String(e)}`,
+      );
       continue;
     }
     const outcome = q.upsertSubmission(db, sub, deadline);

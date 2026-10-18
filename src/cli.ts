@@ -21,6 +21,7 @@ import { attachFiles, decide, reviewQueue } from "./service";
 import { intakeOf, loadSettings, modelsOf, policyOf } from "./settings";
 import { type DB, openDb } from "./store/db";
 import * as q from "./store/queries";
+import { syncOnce } from "./sync";
 import { usageReport } from "./usage";
 
 export type { BuildDeps };
@@ -188,6 +189,33 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
     );
 
   program
+    .command("sync")
+    .description(
+      "Pull the form's responses sheet (HACKEVAL_SHEET_ID), import it, and gate new or changed teams (scored too with HACKEVAL_AUTO_SCORE).",
+    )
+    .addOption(hackathonOption())
+    .action(async (o: { hackathon?: string }) => {
+      const id = hackathonOf(o);
+      const s = settings();
+      let report: { processed: number; byStatus: Record<string, number> } | null = null;
+      const status = await syncOnce(id, {
+        db: database(),
+        settings: s,
+        mapping: intakeOf(s),
+        startRun: () => "cli",
+      });
+      if (status.ok && status.runId) {
+        const deps = buildDeps(s, q.activeRubric(database(), id), q.getHackathon(database(), id).deadline);
+        report = await new BatchRunner(database(), deps, s.concurrency).run(id, {
+          phase: s.autoScore ? "all" : "gate",
+        });
+      }
+      const { runId: _runId, ...shown } = status;
+      print(JSON.stringify(report ? { ...shown, run: report } : shown, null, 2));
+      if (!status.ok) throw new CliError(status.error ?? "sync failed");
+    });
+
+  program
     .command("status")
     .description(
       "Submission counts by status, model usage and estimated cost (prices in config/models.yaml).",
@@ -353,7 +381,14 @@ export async function runCli(args: string[], opts: CliOptions = {}): Promise<Cli
         throw new CliError(
           "set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET before serving (sign in with Google; see docs/runbook.md)",
         );
-      const app = await buildApp({ settings: s, db: database(), buildDeps, webDist: WEB_DIST, logger: true });
+      const app = await buildApp({
+        settings: s,
+        db: database(),
+        buildDeps,
+        webDist: WEB_DIST,
+        logger: true,
+        startSync: true,
+      });
       await app.listen({ host: o.host, port: o.port });
       await new Promise<void>((done) => {
         const stop = () => void app.close().then(() => done());

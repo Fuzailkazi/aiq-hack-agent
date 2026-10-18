@@ -34,7 +34,7 @@ describe("CSV import", () => {
     );
     const report = importCsv(db, "h", path, MAPPING, NOW);
     expect([report.created, report.ignoredLate]).toEqual([1, 1]);
-    expect(report.errors).toEqual(["row 3: team_name and repo_url are required"]);
+    expect(report.errors).toEqual(["row 3 (Bravo): team_name and repo_url are required"]);
     expect(report.late).toEqual(["row 5 (Late): submitted 2026-10-03T00:00:00Z, after the deadline"]);
   });
 
@@ -87,7 +87,7 @@ describe("CSV import", () => {
       NOW,
     );
     expect(report.errors).toEqual([
-      "row 2: submitted_at must include a timezone offset (e.g. 2026-10-01T10:00:00Z), or set timezone in intake.yaml",
+      "row 2 (Alpha): submitted_at must include a timezone offset (e.g. 2026-10-01T10:00:00Z), or set timezone in intake.yaml",
     ]);
   });
 
