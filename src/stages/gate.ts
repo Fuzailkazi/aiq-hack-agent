@@ -9,7 +9,8 @@ import { disqualificationFeedback } from "./feedback";
 export type Outcome = "pass" | "fail" | "unresolved";
 
 /**
- * PASS: installed and called in non-test application code. FAIL only on positive absence. Anything the scanner
+ * PASS: installed and called in non-test application code, or an ArmorIQ plugin package (ArmorClaw) declared in a
+ * manifest. FAIL only on positive absence. Anything the scanner
  * could not settle (calls without an install, test/notebook/HTTP-only use, untraced imports, scanner notes) is
  * UNRESOLVED and goes to Jev / a human, never straight to disqualification.
  */
@@ -28,11 +29,26 @@ export function classify(
   );
   const installed = evidence.installs.length > 0 || !policy.requireInstall;
   const envKey = evidence.envSignals.some((s) => s.var.endsWith("API_KEY"));
+  const plugins = evidence.installs.filter(
+    (i) => i.kind === "manifest" && policy.pluginPackages.includes(i.package),
+  );
   const checks = {
     sdkInstalled: evidence.installs.length > 0,
     sdkCalledInAppCode: app.length > 0,
     envApiKeyPresent: envKey,
+    ...(plugins.length ? { armorclawPlugin: true } : {}),
   };
+
+  if (plugins.length) {
+    const where = [...new Set(plugins.map((i) => i.path))].sort().join(", ");
+    return {
+      outcome: "pass",
+      reasons: [
+        `ArmorIQ plugin ${[...new Set(plugins.map((i) => i.package))].join(", ")} declared in ${where} (loaded by the agent runtime, e.g. OpenClaw)`,
+      ],
+      checks,
+    };
+  }
 
   if (installed && app.length && (envKey || !policy.envRequired)) {
     const where = [...new Set(app.map((u) => `${u.path}:${u.line}`))].sort().slice(0, 5).join(", ");
