@@ -23,12 +23,30 @@ export interface RetryPolicy {
 
 export const DEFAULT_RETRY: RetryPolicy = { retries: 5, baseDelayMs: 15_000 };
 
+/** Longer than this and waiting is pointless (a daily quota): fail at once and say when it resets. */
+export const MAX_RETRY_WAIT_S = 300;
+
+/** Google's "Please retry in 22h9m18.28s" (or "retry in 41s") as seconds, or null when absent. */
+export function retryAfterS(message: string): number | null {
+  const m = /retry in ((?:\d+h)?(?:\d+m)?(?:[\d.]+s)?)/i.exec(message);
+  if (!m?.[1]) return null;
+  const part = (unit: string) => Number(new RegExp(`([\\d.]+)${unit}`).exec(m[1])?.[1] ?? 0);
+  const seconds = part("h") * 3600 + part("m") * 60 + part("s");
+  return seconds > 0 ? seconds : null;
+}
+
+const human = (s: number) =>
+  s >= 3600 ? `${Math.round(s / 3600)}h` : s >= 60 ? `${Math.round(s / 60)} min` : `${Math.ceil(s)}s`;
+
 class AttemptFailed extends Error {
-  constructor(
-    message: string,
-    readonly transient: boolean,
-  ) {
-    super(message);
+  readonly transient: boolean;
+  readonly retryAfterS: number | null;
+  constructor(message: string, details: string) {
+    const wait = retryAfterS(details);
+    const tooLong = wait !== null && wait > MAX_RETRY_WAIT_S;
+    super(tooLong ? `${message}; Google says retry in ${human(wait)}` : message);
+    this.transient = TRANSIENT.test(details) && !tooLong;
+    this.retryAfterS = wait;
   }
 }
 
@@ -50,7 +68,9 @@ export class StructuredRunner {
         return { data, usage };
       } catch (e) {
         if (!(e instanceof AttemptFailed) || !e.transient || attempt >= this.retry.retries) throw e;
-        const delay = this.retry.baseDelayMs * 2 ** attempt;
+        // Wait as long as Google asks when it says; otherwise back off exponentially.
+        const delay =
+          e.retryAfterS !== null ? e.retryAfterS * 1000 + 500 : this.retry.baseDelayMs * 2 ** attempt;
         await new Promise((resolve) => setTimeout(resolve, delay + Math.random() * delay * 0.2));
       }
     }
@@ -99,17 +119,14 @@ export class StructuredRunner {
     } catch (e) {
       // Some transport errors are thrown instead of arriving as an error event.
       const message = e instanceof Error ? e.message : String(e);
-      throw new AttemptFailed(
-        `agent ${this.agent.name} failed: ${message.slice(0, 300)}`,
-        TRANSIENT.test(message),
-      );
+      throw new AttemptFailed(`agent ${this.agent.name} failed: ${message.slice(0, 300)}`, message);
     } finally {
       await sessions.deleteSession({ appName: APP_NAME, userId: USER_ID, sessionId: session.id });
     }
     if (!result || typeof result !== "object")
       throw new AttemptFailed(
         `agent ${this.agent.name} returned no structured output${lastEvent ? ` (${lastEvent})` : ""}`,
-        TRANSIENT.test(errorCode),
+        errorCode,
       );
     return result;
   }
