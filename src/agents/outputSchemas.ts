@@ -70,6 +70,7 @@ export function toArtifactFindings(source: Source, rubric: Rubric, data: unknown
     summary: parsed.summary,
     claims: parsed.claims,
     redFlags: parsed.redFlags,
+    unavailable: null,
     findings: forSource(rubric, source).map((c) => {
       const f = parsed.findings[c.id] as z.infer<ReturnType<typeof findingSchema>>;
       return {
@@ -94,6 +95,7 @@ export function toScorecard(rubric: Rubric, data: unknown): Scorecard {
         level: levelIndex(c, s.level),
         rationale: s.rationale,
         citations: s.citations,
+        notAssessed: false,
       };
     }),
     strengths: parsed.strengths,

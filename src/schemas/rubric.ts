@@ -97,6 +97,23 @@ export function weightedScore(rubric: Rubric, levels: Record<string, number>): n
   return Math.round((10000 * total) / weights) / 100;
 }
 
+/**
+ * 0-100 score over only the criteria in `include` (the ones that could be judged), renormalized by their weights.
+ * Throws when nothing could be judged.
+ */
+export function partialWeightedScore(
+  rubric: Rubric,
+  levels: Record<string, number>,
+  include: Set<string>,
+): number {
+  const judged = rubric.criteria.filter((c) => include.has(c.id));
+  if (!judged.length) throw new Error("no criterion could be judged");
+  let total = 0;
+  for (const c of judged) total += (c.weight * levels[c.id]) / maxIndex(c);
+  const weights = judged.reduce((sum, c) => sum + c.weight, 0);
+  return Math.round((10000 * total) / weights) / 100;
+}
+
 export function loadRubric(path: string): Rubric {
   return RubricSchema.parse(parseYaml(readFileSync(path, "utf8")));
 }

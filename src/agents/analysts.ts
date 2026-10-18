@@ -77,6 +77,7 @@ export class AdkAnalyze {
         findings: [],
         claims: [],
         redFlags: [],
+        unavailable: null,
       };
     const absent = {
       deck: media.deck === null,
@@ -97,6 +98,7 @@ export class AdkAnalyze {
         })),
         claims: [],
         redFlags: [],
+        unavailable: null,
       };
     }
     const { data, usage } = await this.runner(source).run(buildAnalystParts(source, sub, media, evidence));

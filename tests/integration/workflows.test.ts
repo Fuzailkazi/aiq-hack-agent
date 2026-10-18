@@ -40,22 +40,30 @@ describe("scoring workflow", () => {
   it("runs analysts in parallel, joins, synthesizes and calibrates", async () => {
     const deps = fakeDeps(rubric, policy, {});
     const state = await new WorkflowRunner(buildScoringWorkflow(deps)).run(initial("u"));
+    // Cheapest and most reliable first: code, form, deck, then the video.
     expect((state.findings as { source: string }[]).map((f) => f.source)).toEqual([
-      "deck",
-      "video",
       "repo",
       "form",
+      "deck",
+      "video",
     ]);
     expect(state.calibration).toMatchObject({ route: "accept", autoScore: 100 });
   });
 
-  it("stops when media is unreachable", async () => {
+  it("keeps scoring when the video cannot be fetched, and says so", async () => {
     const deps = fakeDeps(rubric, policy, { u: { mediaUnreachable: true } });
     const state = await new WorkflowRunner(buildScoringWorkflow(deps)).run(initial("u"));
     expect(state.media).toMatchObject({
       unreachable: { video: "link returned a login page instead of a video" },
     });
-    expect("calibration" in state).toBe(false);
+    const video = (state.findings as { source: string; unavailable: string | null }[]).find(
+      (f) => f.source === "video",
+    );
+    expect(video?.unavailable).toBe("link returned a login page instead of a video");
+    expect(state.calibration).toBeDefined();
+    expect(state.warnings).toEqual(
+      expect.arrayContaining(["Video not watched: link returned a login page instead of a video."]),
+    );
   });
 
   it("skips the repo analyst when no criterion uses the repo", async () => {
@@ -74,8 +82,8 @@ describe("scoring workflow", () => {
     };
     const state = await new WorkflowRunner(buildScoringWorkflow(deps)).run(initial("u"));
     expect(calls.sort()).toEqual(["deck", "video"]);
-    expect((state.findings as { summary: string }[])[2].summary).toBe(
-      "The rubric has no repo-sourced criteria.",
-    );
+    expect(
+      (state.findings as { source: string; summary: string }[]).find((f) => f.source === "repo")?.summary,
+    ).toBe("The rubric has no repo-sourced criteria.");
   });
 });

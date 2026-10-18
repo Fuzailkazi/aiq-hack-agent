@@ -10,7 +10,7 @@ import {
   type Status,
 } from "./schemas/evaluation";
 import { levelsById } from "./schemas/findings";
-import { criterion, levelIndex, type Rubric, weightedScore } from "./schemas/rubric";
+import { criterion, levelIndex, partialWeightedScore, type Rubric } from "./schemas/rubric";
 import type { DB } from "./store/db";
 import * as q from "./store/queries";
 
@@ -46,9 +46,12 @@ export function resolveReview(
   let next: Status;
   const decision = review.decision;
 
+  // Attaching a file a team's link could not provide re-scores it, also when it was scored without that file.
+  const scoredWithoutMedia = status === "needs_review" && Object.keys(evaluation.mediaUnreachable).length > 0;
   if (
-    (status === "needs_attention" || status === "error") &&
-    (decision === "requeue" || (decision === "attach" && status === "needs_attention"))
+    ((status === "needs_attention" || status === "error") &&
+      (decision === "requeue" || (decision === "attach" && status === "needs_attention"))) ||
+    (scoredWithoutMedia && decision === "attach")
   ) {
     next = evaluation.gate?.status === "pass" ? "scoring" : "queued";
     update.error = null;
@@ -70,7 +73,12 @@ export function resolveReview(
   } else if (status === "needs_review" && decision === "override") {
     if (!evaluation.scorecard) throw new ReviewError("cannot override: the submission has no scorecard");
     const levels = levelsById(evaluation.scorecard);
+    // A judge's level counts even for a criterion the AI could not judge.
+    const judged = new Set(
+      evaluation.scorecard.scores.filter((s) => !s.notAssessed).map((s) => s.criterionId),
+    );
     for (const [criterionId, label] of Object.entries(review.overrides ?? {})) {
+      judged.add(criterionId);
       try {
         levels[criterionId] = levelIndex(criterion(rubric, criterionId), label);
       } catch (e) {
@@ -80,7 +88,7 @@ export function resolveReview(
     next = "finalized";
     // The judge re-levels criteria; the deductions for missing requirements still apply.
     update.finalScore = applyPenalties(
-      weightedScore(rubric, levels),
+      partialWeightedScore(rubric, levels, judged),
       evaluation.calibration?.penalties ?? [],
     );
   } else {

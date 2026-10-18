@@ -791,6 +791,8 @@ export interface paths {
                                 mediaUnreachable: {
                                     [key: string]: string;
                                 };
+                                /** @default [] */
+                                warnings: string[];
                                 /** @default null */
                                 media: {
                                     /** @default null */
@@ -898,6 +900,8 @@ export interface paths {
                                     claims: string[];
                                     /** @default [] */
                                     redFlags: string[];
+                                    /** @default null */
+                                    unavailable: string | null;
                                 }[];
                                 /** @default null */
                                 scorecard: {
@@ -912,6 +916,8 @@ export interface paths {
                                             source: "deck" | "video" | "repo" | "form";
                                             ref: string;
                                         }[];
+                                        /** @default false */
+                                        notAssessed: boolean;
                                     }[];
                                     /** @default [] */
                                     strengths: string[];

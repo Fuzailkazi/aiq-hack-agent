@@ -195,22 +195,21 @@ export class BatchRunner {
     });
     const media = MediaDigestSchema.parse(state.media);
     let evaluation: Evaluation;
-    if (Object.keys(media.unreachable).length) {
-      evaluation = {
-        ...previous,
-        status: "needs_attention",
-        mediaUnreachable: media.unreachable,
-        media,
-        usage: addUsage(previous.usage, this.deps.usage?.pop(sub.id) ?? emptyUsage()),
-        error: null,
-      };
-    } else {
+    {
       let calibration = CalibrationResultSchema.parse(state.calibration);
       const recheck = overridesToRecheck(previous.reviews, this.deps.rubric, (version) =>
         q.getRubric(this.db, sub.hackathonId, previous.rubricId ?? this.deps.rubric.id, version),
       );
       if (recheck.length)
         calibration = { ...calibration, route: "review", reasons: [...calibration.reasons, ...recheck] };
+      // A score with gaps (something could not be reviewed) always goes to a judge, never auto-accepted.
+      const warnings = (state.warnings as string[] | undefined) ?? [];
+      if (warnings.length && calibration.route === "accept")
+        calibration = {
+          ...calibration,
+          route: "review",
+          reasons: [...calibration.reasons, "parts of the submission could not be reviewed"],
+        };
       // A rubric activated while this submission was being scored makes the result stale (re-scored next run).
       const active = q.getHackathon(this.db, sub.hackathonId);
       const outdated =
@@ -226,7 +225,9 @@ export class BatchRunner {
         status,
         rubricId: this.deps.rubric.id,
         rubricVersion: this.deps.rubric.version,
-        mediaUnreachable: {},
+        // Kept so an organizer can still attach the missing file; scoring went ahead without it.
+        mediaUnreachable: media.unreachable,
+        warnings,
         media,
         prescreen: PrescreenResultSchema.parse(state.prescreen),
         findings: (state.findings as unknown[]).map((f) => ArtifactFindingsSchema.parse(f)),

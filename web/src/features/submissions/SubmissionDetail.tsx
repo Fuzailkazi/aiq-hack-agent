@@ -186,11 +186,14 @@ export function SubmissionDetail() {
                   <ul className="flex flex-col gap-2">
                     {rubric.criteria.map((c) => {
                       const sc = evaluation.scorecard?.scores.find((x) => x.criterionId === c.id);
-                      const pct = sc ? (100 * sc.level) / (c.levels.length - 1) : null;
+                      const pct = sc && !sc.notAssessed ? (100 * sc.level) / (c.levels.length - 1) : null;
                       return (
                         <li key={c.id} className="flex items-center justify-between gap-4">
                           <span className="text-aq-sm text-aq-ink-soft min-w-0 truncate">
-                            {c.name} <span className="text-aq-ink-faint">· {sc?.levelLabel ?? "—"}</span>
+                            {c.name}{" "}
+                            <span className={sc?.notAssessed ? "text-aq-warn" : "text-aq-ink-faint"}>
+                              · {sc?.notAssessed ? "not judged" : (sc?.levelLabel ?? "—")}
+                            </span>
                           </span>
                           <ScoreBar
                             value={pct}
@@ -232,7 +235,7 @@ export function SubmissionDetail() {
           </Panel>
         )}
 
-        {status === "needs_attention" && (
+        {(status === "needs_attention" || Object.keys(evaluation?.mediaUnreachable ?? {}).length > 0) && (
           <Panel title="Attach files" icon={IconUpload} tone="info">
             <AttachForm id={submission.id} />
           </Panel>

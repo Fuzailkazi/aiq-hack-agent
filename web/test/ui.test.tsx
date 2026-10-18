@@ -204,6 +204,19 @@ describe("scoring one team at a time", () => {
   });
 });
 
+describe("scores with gaps", () => {
+  it("shows what could not be reviewed and marks unjudged criteria", async () => {
+    const data = submission("needs_review");
+    data.reasons = ["⚠ Video not watched: the Gemini quota is used up."];
+    const scores = (data.evaluation.scorecard as { scores: Record<string, unknown>[] }).scores;
+    scores[0] = { ...scores[0], notAssessed: true };
+    mockApi({ "GET /api/submissions/s1": data, "GET /api/hackathons/h": HACKATHON });
+    renderAt("/s/s1");
+    expect((await screen.findByTestId("status-reasons")).textContent).toContain("Video not watched");
+    expect(await screen.findAllByText(/not judged/i)).not.toHaveLength(0);
+  });
+});
+
 describe("form sync", () => {
   it("shows the last sync and lists entries that could not be imported", async () => {
     mockApi({

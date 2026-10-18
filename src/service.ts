@@ -52,7 +52,11 @@ export function statusReasons(status: Status, ev: Evaluation | null): string[] {
     return ev.gate?.reasons ?? [];
   }
   if (status === "gate_review") return ev.gate?.reasons ?? [];
-  if (status === "needs_review") return reviewReasons(ev.calibration?.reasons ?? []);
+  if (status === "needs_review" || status === "finalized")
+    return [
+      ...ev.warnings.map((w) => `⚠ ${w}`),
+      ...(status === "needs_review" ? reviewReasons(ev.calibration?.reasons ?? []) : []),
+    ];
   return [];
 }
 
@@ -227,7 +231,9 @@ export function attachFiles(
     if (path)
       q.updateArtifact(db, id, { kind, origin: "upload", uri: path, sha256: null, unreachableReason: null });
   }
-  if (status !== "needs_attention") return { from: status, to: status };
+  const unreachable = Object.keys(q.getEvaluation(db, id)?.mediaUnreachable ?? {}).length > 0;
+  if (status !== "needs_attention" && !(status === "needs_review" && unreachable))
+    return { from: status, to: status };
   const to = resolveReview(
     db,
     id,

@@ -85,7 +85,7 @@ describe("batch runner (walking skeleton)", () => {
     const bravo = idOf("Bravo");
     expect(statuses().Bravo).toBe("disqualified");
     resolveReview(db, bravo, reinstate, rubric);
-    script["https://github.com/example/bravo"] = { gate: "fail", crashIn: "synthesize" };
+    script["https://github.com/example/bravo"] = { gate: "fail", crashIn: "calibrate" };
     await runner(script).run("h", { phase: "score" });
     expect(statuses().Bravo).toBe("error");
     script["https://github.com/example/bravo"] = { gate: "fail" };
@@ -98,8 +98,8 @@ describe("batch runner (walking skeleton)", () => {
     const golf = "https://github.com/example/golf";
     const script: Record<string, Scripted> = {
       ...SCRIPT,
-      [alpha]: { ...SCRIPT[alpha], crashIn: "synthesize" },
-      [golf]: { ...SCRIPT[golf], crashIn: "synthesize" },
+      [alpha]: { ...SCRIPT[alpha], crashIn: "calibrate" },
+      [golf]: { ...SCRIPT[golf], crashIn: "calibrate" },
     };
     await runner(script).run("h", { phase: "all" });
     expect([statuses().Alpha, statuses().Golf]).toEqual(["error", "error"]);
@@ -122,7 +122,11 @@ describe("batch runner (walking skeleton)", () => {
     resolveReview(db, bravo, reinstate, rubric);
     script["https://github.com/example/bravo"] = { gate: "fail", mediaUnreachable: true };
     await runner(script).run("h", { phase: "score" });
-    expect(statuses().Bravo).toBe("needs_attention");
+    // Scored without the video (with a warning), and attaching the file re-scores it.
+    expect(statuses().Bravo).toBe("needs_review");
+    expect(q.getEvaluation(db, bravo)?.warnings).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^Video not watched/)]),
+    );
     const attach = { ...reinstate, kind: "attention" as const, decision: "attach" as const };
     expect(resolveReview(db, bravo, attach, rubric)).toBe("scoring");
   });
@@ -164,14 +168,14 @@ describe("batch runner (walking skeleton)", () => {
   it("isolates a crashing submission", async () => {
     const report = await runner({
       ...SCRIPT,
-      "https://github.com/example/alpha": { crashIn: "synthesize" },
+      "https://github.com/example/alpha": { crashIn: "calibrate" },
     }).run("h", {
       phase: "all",
     });
     expect(statuses().Alpha).toBe("error");
     expect(statuses().Golf).toBe("finalized");
     expect(report.errors).toHaveLength(1);
-    expect(report.errors[0]).toMatch(/scripted crash in synthesize/);
+    expect(report.errors[0]).toMatch(/scripted crash in calibrate/);
   });
 
   it("aborts before touching submissions when a stage is not ready", async () => {
@@ -181,7 +185,7 @@ describe("batch runner (walking skeleton)", () => {
   });
 
   it("retry requeues errors", async () => {
-    await runner({ ...SCRIPT, "https://github.com/example/alpha": { crashIn: "synthesize" } }).run("h", {
+    await runner({ ...SCRIPT, "https://github.com/example/alpha": { crashIn: "calibrate" } }).run("h", {
       phase: "all",
     });
     expect(statuses().Alpha).toBe("error");

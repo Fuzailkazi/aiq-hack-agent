@@ -26,6 +26,11 @@ export const ArtifactFindingsSchema = z.object({
   findings: z.array(CriterionFindingSchema).default([]),
   claims: z.array(z.string()).default([]),
   redFlags: z.array(z.string()).default([]),
+  /**
+   * Set when this artifact could not be analyzed because of our side (download failed, model quota, outage), as
+   * opposed to the team not submitting it. Its criteria are judged from other sources, or left out of the score.
+   */
+  unavailable: z.string().nullable().default(null),
 });
 export type ArtifactFindings = z.infer<typeof ArtifactFindingsSchema>;
 
@@ -37,6 +42,8 @@ export const CriterionScoreSchema = z.object({
   level: z.number().int(),
   rationale: z.string(),
   citations: z.array(CitationSchema).default([]),
+  /** No source for this criterion could be analyzed: excluded from the score until the team is re-scored. */
+  notAssessed: z.boolean().default(false),
 });
 export type CriterionScore = z.infer<typeof CriterionScoreSchema>;
 
