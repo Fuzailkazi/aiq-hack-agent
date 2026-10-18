@@ -36,6 +36,27 @@ const site = (over: Partial<UsageSite> = {}): UsageSite => ({
 });
 const ev = (over: Record<string, unknown> = {}) => ArmorIQEvidenceSchema.parse(over);
 
+describe("ArmorClaw plugin", () => {
+  const armorclaw = (kind: InstallHit["kind"]): InstallHit => ({
+    path: kind === "manifest" ? "package.json" : "package-lock.json",
+    kind,
+    ecosystem: "npm",
+    package: "@armoriq/armorclaw",
+    versionSpec: "^0.0.1",
+  });
+
+  it("passes when @armoriq/armorclaw is declared in a manifest, with no SDK calls needed", () => {
+    const result = classify(ev({ installs: [armorclaw("manifest"), armorclaw("lockfile")] }), POLICY);
+    expect(result.outcome).toBe("pass");
+    expect(result.reasons[0]).toMatch(/ArmorIQ plugin @armoriq\/armorclaw declared in package.json/);
+    expect(result.checks.armorclawPlugin).toBe(true);
+  });
+
+  it("does not count it from a lockfile alone (it could be a transitive dependency)", () => {
+    expect(classify(ev({ installs: [armorclaw("lockfile")] }), POLICY).outcome).toBe("fail");
+  });
+});
+
 describe("classify", () => {
   it.each([
     ["installed + app call", ev({ installs: [INSTALL], usageSites: [site()] }), "pass"],

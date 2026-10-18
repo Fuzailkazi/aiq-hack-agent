@@ -39,7 +39,7 @@ npm run hackeval -- import responses.csv
 npm run hackeval -- run
 ```
 
-- **Gate:** no `@armoriq/sdk` / `armoriq-sdk` install plus a real call means disqualified; nothing else runs.
+- **Gate:** no `@armoriq/sdk` / `armoriq-sdk` install plus a real call means disqualified; nothing else runs. Declaring the ArmorClaw plugin (`@armoriq/armorclaw`, loaded by OpenClaw from its config) in `package.json` also passes.
 - **Rubric** (`config/rubrics/flow_state.yaml`): demo video 40, live demo 40, ArmorIQ integration depth 20, takeaways 15, ArmorTools Pro 5 (normalized to 0-100).
 - **Intake** (`config/intake.flow_state.yaml`): form timestamps are read as Asia/Kolkata; "Did you use ElevenLabs? Yes" puts a team on the `elevenlabs` track, everyone else on `main`. Names and emails are never imported.
 - **Videos:** with Gemini, YouTube links go to the model as-is (it watches them), so no download is needed. Private videos fail and go to review.

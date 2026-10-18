@@ -38,6 +38,7 @@ const CHECK_LABEL: Record<string, string> = {
   sdkInstalled: "SDK installed",
   sdkCalledInAppCode: "SDK called in app code",
   envApiKeyPresent: "API key in env (optional)",
+  armorclawPlugin: "ArmorClaw plugin declared",
 };
 
 export function SubmissionDetail() {

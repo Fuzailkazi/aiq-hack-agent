@@ -29,6 +29,11 @@ export const GatePolicySchema = z.object({
   envRequired: z.boolean().default(false),
   jevPass: z.number().min(0).max(1).default(0.8),
   pinToDeadline: z.boolean().default(true),
+  /**
+   * ArmorIQ plugins that a host runtime loads from its own config rather than code calling them (ArmorClaw is an
+   * OpenClaw plugin): declaring one in a manifest passes the gate.
+   */
+  pluginPackages: z.array(z.string()).default(["@armoriq/armorclaw"]),
 });
 export type GatePolicy = z.infer<typeof GatePolicySchema>;
 
