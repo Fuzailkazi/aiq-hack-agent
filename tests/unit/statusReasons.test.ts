@@ -61,6 +61,11 @@ describe("statusReasons", () => {
         "Error: agent x returned no structured output (error=429 message=You exceeded your current quota, please check your plan and billing details)",
       )[0],
     ).toMatch(/quota is used up \(the free tier allows only 20 requests per model per day\)/);
+    expect(
+      failed(
+        "Error: agent x returned no structured output (error=429 message=quota); Google says retry in 22h",
+      )[0],
+    ).toMatch(/it resets in about 22h/);
     expect(statusReasons("scoring", ev({ status: "scoring" }))).toEqual([]);
     expect(statusReasons("finalized", null)).toEqual([]);
   });

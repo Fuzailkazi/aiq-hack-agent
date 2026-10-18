@@ -1,4 +1,6 @@
 /** Apply a human judge's decision to a submission. */
+
+import { applyPenalties } from "./penalties";
 import {
   type Evaluation,
   EvaluationSchema,
@@ -76,7 +78,11 @@ export function resolveReview(
       }
     }
     next = "finalized";
-    update.finalScore = weightedScore(rubric, levels);
+    // The judge re-levels criteria; the deductions for missing requirements still apply.
+    update.finalScore = applyPenalties(
+      weightedScore(rubric, levels),
+      evaluation.calibration?.penalties ?? [],
+    );
   } else {
     throw new ReviewError(`cannot apply decision '${decision}' to a submission in status '${status}'`);
   }

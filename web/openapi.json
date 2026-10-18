@@ -466,13 +466,47 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "penalties": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "enum": [
+                                  "social_post",
+                                  "hashtag",
+                                  "video_length",
+                                  "elevenlabs_code",
+                                  "live_demo"
+                                ]
+                              },
+                              "points": {
+                                "type": "number",
+                                "minimum": 0,
+                                "exclusiveMinimum": true,
+                                "maximum": 100
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "points"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "id",
                         "version",
                         "criteria",
-                        "tracks"
+                        "tracks",
+                        "penalties"
                       ],
                       "additionalProperties": false
                     },
@@ -2212,6 +2246,39 @@
                                 "additionalProperties": false
                               }
                             },
+                            "rubricScore": {
+                              "default": null,
+                              "nullable": true,
+                              "type": "number"
+                            },
+                            "penalties": {
+                              "default": [],
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "points": {
+                                    "type": "number"
+                                  },
+                                  "detail": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "points",
+                                  "detail"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
                             "autoScore": {
                               "type": "number"
                             },
@@ -2249,6 +2316,8 @@
                           },
                           "required": [
                             "criteria",
+                            "rubricScore",
+                            "penalties",
                             "autoScore",
                             "confidence",
                             "route",
@@ -2491,6 +2560,39 @@
                             "additionalProperties": false
                           }
                         },
+                        "rubricScore": {
+                          "default": null,
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "penalties": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "points": {
+                                "type": "number"
+                              },
+                              "detail": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "points",
+                              "detail"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
                         "autoScore": {
                           "type": "number"
                         },
@@ -2528,6 +2630,8 @@
                       },
                       "required": [
                         "criteria",
+                        "rubricScore",
+                        "penalties",
                         "autoScore",
                         "confidence",
                         "route",

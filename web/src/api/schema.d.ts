@@ -263,6 +263,13 @@ export interface paths {
                                 }[];
                                 /** @default [] */
                                 tracks: string[];
+                                /** @default [] */
+                                penalties: {
+                                    /** @enum {string} */
+                                    id: "social_post" | "hashtag" | "video_length" | "elevenlabs_code" | "live_demo";
+                                    points: number;
+                                    label?: string;
+                                }[];
                             } | null;
                             byStatus: {
                                 [key: string]: number;
@@ -932,6 +939,15 @@ export interface paths {
                                         /** @default null */
                                         levelGap: number | null;
                                     }[];
+                                    /** @default null */
+                                    rubricScore: number | null;
+                                    /** @default [] */
+                                    penalties: {
+                                        id: string;
+                                        label: string;
+                                        points: number;
+                                        detail: string;
+                                    }[];
                                     autoScore: number;
                                     confidence: number;
                                     /** @enum {string} */
@@ -1012,6 +1028,15 @@ export interface paths {
                                     sufficiency: number | null;
                                     /** @default null */
                                     levelGap: number | null;
+                                }[];
+                                /** @default null */
+                                rubricScore: number | null;
+                                /** @default [] */
+                                penalties: {
+                                    id: string;
+                                    label: string;
+                                    points: number;
+                                    detail: string;
                                 }[];
                                 autoScore: number;
                                 confidence: number;

@@ -8,7 +8,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { checkLiveDemo } from "../acquire/liveDemo";
-import { type FetchOptions, fetchArtifact, type VideoDownloader } from "../acquire/media";
+import { type FetchOptions, fetchArtifact, type VideoDownloader, ytdlpDuration } from "../acquire/media";
 import { TRANSIENT } from "../agents/run";
 import {
   type DeckDigest,
@@ -62,6 +62,8 @@ export interface IngestOptions {
   videoDownloader?: VideoDownloader;
   /** Hand public YouTube links to the model as-is (Gemini watches them) instead of downloading them. */
   remoteYoutube?: boolean;
+  /** Length of a linked video from its metadata, for the 3-5 minute rule (tests inject a fake). */
+  videoDuration?: (url: string) => Promise<number | null>;
   /** Live demo checker (tests inject a fake). */
   liveDemoCheck?: (url: string) => Promise<LiveDemoCheck>;
 }
@@ -185,8 +187,10 @@ export async function ingestMedia(sub: Submission, opts: IngestOptions): Promise
   let video: VideoDigest | null = null;
   const remote = sub.video?.origin === "url" && opts.remoteYoutube ? youtubeWatchUrl(sub.video.uri) : null;
   if (remote) {
+    // The model watches the link itself; the length comes from metadata (0 when unknown).
+    const durationS = (await (opts.videoDuration ?? ytdlpDuration)(remote)) ?? 0;
     video = {
-      durationS: 0,
+      durationS: Math.round(durationS * 100) / 100,
       hasSpeech: true,
       transcript: [],
       keyframes: [],

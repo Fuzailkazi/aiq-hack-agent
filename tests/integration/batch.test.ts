@@ -93,6 +93,28 @@ describe("batch runner (walking skeleton)", () => {
     expect(statuses().Bravo).toBe("finalized");
   });
 
+  it("scoring one team at a time: a retry limited to one team leaves the other failures alone", async () => {
+    const alpha = "https://github.com/example/alpha";
+    const golf = "https://github.com/example/golf";
+    const script: Record<string, Scripted> = {
+      ...SCRIPT,
+      [alpha]: { ...SCRIPT[alpha], crashIn: "synthesize" },
+      [golf]: { ...SCRIPT[golf], crashIn: "synthesize" },
+    };
+    await runner(script).run("h", { phase: "all" });
+    expect([statuses().Alpha, statuses().Golf]).toEqual(["error", "error"]);
+    script[alpha] = SCRIPT[alpha];
+    script[golf] = SCRIPT[golf];
+    const report = await runner(script).run("h", {
+      phase: "score",
+      only: new Set([idOf("Alpha")]),
+      retry: true,
+    });
+    expect(report.processed).toBe(1);
+    expect(statuses().Alpha).not.toBe("error");
+    expect(statuses().Golf).toBe("error");
+  });
+
   it("a judge's reinstate survives unreachable media and an attach", async () => {
     const script: Record<string, Scripted> = { ...SCRIPT };
     await runner(script).run("h", { phase: "all" });

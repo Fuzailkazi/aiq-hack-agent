@@ -105,6 +105,20 @@ describe("review transitions", () => {
     expect(q.getEvaluation(db, "a")?.finalScore).toBe(75);
   });
 
+  it("an override re-levels criteria but keeps the deductions for missing requirements", () => {
+    const ev = scored("a", 2, "needs_review");
+    ev.calibration = CalibrationResultSchema.parse({
+      ...ev.calibration,
+      penalties: [{ id: "social_post", label: "No X or LinkedIn post", points: 5, detail: "no link" }],
+    });
+    q.saveEvaluation(db, ev);
+    expect(resolveReview(db, "a", review("override", { demo_quality: "End-to-end" }), rubric)).toBe(
+      "finalized",
+    );
+    // 75 from the rubric (as in the plain override test above), minus 5.
+    expect(q.getEvaluation(db, "a")?.finalScore).toBe(70);
+  });
+
   it("refuses invalid transitions and unknown labels", () => {
     q.saveEvaluation(db, scored("a", 2, "finalized"));
     expect(() => resolveReview(db, "a", review("accept"), rubric)).toThrow(/cannot apply decision/);

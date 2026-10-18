@@ -77,7 +77,7 @@ export class BatchRunner {
         );
       }
     }
-    if (opts.retry) this.requeueErrors(hackathonId);
+    if (opts.retry) this.requeueErrors(hackathonId, opts.only);
     const report: BatchReport = { byStatus: {}, errors: [], skipped: [], processed: 0 };
     for (const phase of phases) {
       if (phase === "gate") await this.runPhase(hackathonId, ["queued"], this.gateOne, opts, report);
@@ -161,8 +161,10 @@ export class BatchRunner {
     report.processed += 1;
   }
 
-  private requeueErrors(hackathonId: string): void {
+  /** Errors back into the pipeline: all of them, or only the submissions this run is limited to. */
+  private requeueErrors(hackathonId: string, only?: Set<string>): void {
     for (const record of q.currentSubmissions(this.db, hackathonId, ["error"])) {
+      if (only && !only.has(record.submission.id)) continue;
       const evaluation = q.getEvaluation(this.db, record.submission.id);
       q.setStatus(this.db, record.submission.id, evaluation?.gate?.status === "pass" ? "scoring" : "queued");
     }

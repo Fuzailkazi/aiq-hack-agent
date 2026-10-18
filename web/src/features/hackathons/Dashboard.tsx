@@ -175,10 +175,16 @@ export function Dashboard() {
 
         <div className="grid items-start gap-5.5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <div className="flex flex-col gap-5.5">
-            <Panel title="Run the judging pipeline" icon={IconPlay} tone="accent">
+            <Panel
+              title="Run the judging pipeline"
+              icon={IconPlay}
+              tone="accent"
+              count={rows.filter((r) => r.status === "scoring" || r.status === "stale").length}
+            >
               <p className="text-aq-sm text-aq-ink-muted mb-4">
-                1. SDK gate: disqualifies teams without ArmorIQ. 2. AI scoring: watches the video, checks the
-                live demo, reads the code and the form. 3. A judge confirms every score.
+                1. SDK gate: disqualifies teams without ArmorIQ (new teams are checked automatically). 2. AI
+                scoring, one team at a time: watches the video, checks the live demo, reads the code and the
+                form, then cuts points for missing requirements. 3. A judge confirms every score.
               </p>
               {rubric ? (
                 <RunPanel hid={hid} />

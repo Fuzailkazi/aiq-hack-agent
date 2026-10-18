@@ -26,6 +26,7 @@ import { ScoreBar, trackLabel } from "../../shared/Score";
 import { StatCell } from "../../shared/StatCell";
 import { STATUS, StatusPill } from "../../shared/status";
 import { AppShell } from "../../shell/AppShell";
+import { RunPanel } from "../hackathons/RunPanel";
 import { useHackathon } from "../hackathons/useHackathon";
 import { AttachForm } from "./AttachForm";
 import { EvidenceViewer } from "./EvidenceViewer";
@@ -161,6 +162,25 @@ export function SubmissionDetail() {
                     />
                   )}
                 </div>
+                {calibration?.rubricScore != null && (
+                  <div className="text-aq-sm flex flex-col gap-1" data-testid="score-breakdown">
+                    <span className="text-aq-ink-soft flex justify-between gap-4">
+                      <span>Rubric score</span>
+                      <span className="font-mono">{calibration.rubricScore.toFixed(1)}</span>
+                    </span>
+                    {calibration.penalties.map((p) => (
+                      <span key={p.id} className="text-aq-bad flex justify-between gap-4">
+                        <span>
+                          {p.label} <span className="text-aq-ink-muted">({p.detail})</span>
+                        </span>
+                        <span className="font-mono">−{p.points}</span>
+                      </span>
+                    ))}
+                    {calibration.penalties.length === 0 && (
+                      <span className="text-aq-good">No deductions: every requirement was met.</span>
+                    )}
+                  </div>
+                )}
                 {rubric && (
                   <ul className="flex flex-col gap-2">
                     {rubric.criteria.map((c) => {
@@ -181,6 +201,14 @@ export function SubmissionDetail() {
                     })}
                   </ul>
                 )}
+              </div>
+            ) : status === "scoring" || status === "stale" || status === "error" ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-aq-sm text-aq-ink-muted">
+                  Not scored yet. Scoring this team watches its video, checks the live demo, reads the code
+                  and the form, then cuts points for missing requirements.
+                </p>
+                <RunPanel hid={hid} submissionId={submission.id} />
               </div>
             ) : (
               <p className="text-aq-sm text-aq-ink-muted">

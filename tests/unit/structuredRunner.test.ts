@@ -1,7 +1,7 @@
 import { LlmAgent, type LlmRequest, type LlmResponse } from "@google/adk";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { OUTPUT_KEY, StructuredRunner } from "../../src/agents/run";
+import { OUTPUT_KEY, retryAfterS, StructuredRunner } from "../../src/agents/run";
 import { ScriptedLlm } from "../fakes";
 
 /** Answers with the queued error codes first (as ADK error events), then valid JSON. */
@@ -60,6 +60,24 @@ describe("StructuredRunner retries", () => {
       new StructuredRunner(agent(llm), { retries: 1, baseDelayMs: 1 }).run([{ text: "go" }]),
     ).rejects.toThrow(/no structured output \(error=429 message=simulated 429\)/);
     expect(llm.calls).toBe(2);
+  });
+
+  it("fails at once on a daily quota (Google says retry in hours) and says when it resets", async () => {
+    const llm = new FlakyLlm(
+      ["429", "429"],
+      () => "You exceeded your current quota, limit: 20. Please retry in 22h9m18.28s.",
+    );
+    await expect(
+      new StructuredRunner(agent(llm), { retries: 5, baseDelayMs: 1 }).run([{ text: "go" }]),
+    ).rejects.toThrow(/Google says retry in 22h/);
+    expect(llm.calls).toBe(1);
+  });
+
+  it("reads Google's retry hint", () => {
+    expect(retryAfterS("Please retry in 22h9m18.28s.")).toBeCloseTo(79758.28);
+    expect(retryAfterS("Please retry in 41.2s")).toBeCloseTo(41.2);
+    expect(retryAfterS("Please retry in 2m")).toBe(120);
+    expect(retryAfterS("no hint here")).toBeNull();
   });
 
   it("does not retry errors that will not clear up", async () => {

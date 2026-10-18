@@ -1,9 +1,16 @@
 # Flow State Hackathon rubric. Weights are points out of 120 and are normalized to a 0-100 score.
 # Teams that do not both install and call the ArmorIQ SDK are disqualified by the gate before any scoring.
 # ElevenLabs teams are ranked on their own leaderboard (track "elevenlabs"), with the same criteria.
+# Deductions: fixed points cut from the 0-100 score for form requirements a team did not meet (src/penalties.ts).
+# A missing or broken live demo is not listed: the live_demo criterion already scores it.
 id: flow_state
-version: "1"
+version: "2"
 tracks: [main, elevenlabs]
+penalties:
+  - {id: social_post, points: 5, label: No X or LinkedIn post}
+  - {id: hashtag, points: 2, label: "#FlowStateHackathon not confirmed"}
+  - {id: video_length, points: 3, label: Video outside 3 to 5 minutes}
+  - {id: elevenlabs_code, points: 10, label: ElevenLabs claimed but not in the code}
 criteria:
   - id: demo_video
     name: Demo video
