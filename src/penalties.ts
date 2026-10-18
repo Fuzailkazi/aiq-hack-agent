@@ -76,7 +76,8 @@ export function assessPenalties(
   const out: Penalty[] = [];
   for (const rule of rubric.penalties) {
     const detail = broken(rule.id, sub, media, evidence);
-    if (detail) out.push({ id: rule.id, label: rule.label ?? DEFAULT_LABEL[rule.id], points: rule.points, detail });
+    if (detail)
+      out.push({ id: rule.id, label: rule.label ?? DEFAULT_LABEL[rule.id], points: rule.points, detail });
   }
   return out;
 }

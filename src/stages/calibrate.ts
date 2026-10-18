@@ -10,12 +10,12 @@ import {
   SUFFICIENT,
 } from "../jev/calibrationQuestions";
 import type { JevClient } from "../jev/client";
+import { applyPenalties, assessPenalties } from "../penalties";
 import type { CalibrationResult, CriterionCalibration } from "../schemas/calibration";
 import type { PrescreenResult } from "../schemas/evaluation";
 import type { ArmorIQEvidence, MediaDigest } from "../schemas/evidence";
 import { levelsById, type Scorecard } from "../schemas/findings";
 import type { JevDecision } from "../schemas/jev";
-import { applyPenalties, assessPenalties } from "../penalties";
 import { type Criterion, type Rubric, weightedScore } from "../schemas/rubric";
 import type { Submission } from "../schemas/submission";
 import { decideRoute, recompute } from "./route";
