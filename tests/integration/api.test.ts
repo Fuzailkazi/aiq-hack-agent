@@ -216,7 +216,8 @@ describe("API organizer flow", () => {
     expect(run.report.processed).toBe(11);
 
     const detail = (await api("GET", "/api/hackathons/demo")).json();
-    expect(detail.byStatus).toMatchObject({ finalized: 2, needs_review: 1, disqualified: 1 });
+    // Foxtrot's video link fails, so it is scored without the video (with a warning) and sent to a judge.
+    expect(detail.byStatus).toMatchObject({ finalized: 2, needs_review: 2, disqualified: 1 });
     expect(detail.rubric.id).toBe("example");
 
     const queue = (await api("GET", "/api/hackathons/demo/review-queue")).json() as {
@@ -339,7 +340,7 @@ describe("API organizer flow", () => {
       payload: form({ reviewer: "ana" }, { video: "tests/fixtures/decks/deck3.pdf" }),
     });
     expect(attached.statusCode, attached.body).toBe(200);
-    expect(attached.json()).toEqual({ from: "needs_attention", to: "scoring" });
+    expect(attached.json()).toEqual({ from: "needs_review", to: "scoring" });
   });
 });
 

@@ -42,8 +42,9 @@ describe("hackeval CLI", () => {
       disqualified: 1,
       finalized: 2,
       gate_review: 1,
-      needs_attention: 2,
-      needs_review: 1,
+      // Delta's repo is unreachable; Foxtrot is scored without its video and goes to a judge.
+      needs_attention: 1,
+      needs_review: 2,
     });
     // Scripted stages make no model calls; nothing used means nothing is unpriced.
     expect(status.usage).toMatchObject({ submissions: 7, estimatedCostUsd: 0, unpriced: [] });
@@ -150,7 +151,7 @@ describe("hackeval CLI", () => {
   });
 
   it("retries errors and requeues attention items", async () => {
-    script = { ...SCRIPT, "https://github.com/example/alpha": { crashIn: "synthesize" } };
+    script = { ...SCRIPT, "https://github.com/example/alpha": { crashIn: "calibrate" } };
     await ok("init", "demo");
     await ok("rubric", "activate", RUBRIC);
     await ok("import", FIXTURE);
@@ -194,9 +195,7 @@ describe("attach and models", () => {
     const missing = await cli("attach", foxtrot, "--video", `${dir}/missing.mp4`);
     expect(missing.code).toBe(1);
     expect(missing.err).toContain("not found");
-    expect(await ok("attach", foxtrot, "--video", `${dir}/foxtrot.mp4`)).toContain(
-      "needs_attention -> scoring",
-    );
+    expect(await ok("attach", foxtrot, "--video", `${dir}/foxtrot.mp4`)).toContain("needs_review -> scoring");
     script = Object.fromEntries(Object.entries(SCRIPT).filter(([url]) => !url.includes("foxtrot")));
     await ok("run", "--phase", "score");
     expect(JSON.parse(await ok("status")).byStatus.finalized).toBe(3);

@@ -133,7 +133,12 @@ export function fakeDeps(rubric: Rubric, policy: Policy, script: Record<string, 
       return ArtifactFindingsSchema.parse({
         source,
         summary: `${source} looks fine`,
-        findings: forSource(rubric, source).map((c) => ({ criterionId: c.id, observations: ["scripted"] })),
+        // Like the real analysts, each finding carries its own provisional level.
+        findings: forSource(rubric, source).map((c) => ({
+          criterionId: c.id,
+          observations: ["scripted"],
+          provisionalLabel: c.levels[c.levels.length - 1].label,
+        })),
       });
     },
     async synthesize(sub) {

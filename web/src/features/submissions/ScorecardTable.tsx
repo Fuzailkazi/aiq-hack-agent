@@ -51,7 +51,7 @@ export function ScorecardTable({
             const s = scores.find((x) => x.criterionId === c.id);
             const cal = calibration.get(c.id);
             const max = (100 * c.weight) / weightSum;
-            const earned = s ? (max * s.level) / (c.levels.length - 1) : null;
+            const earned = s && !s.notAssessed ? (max * s.level) / (c.levels.length - 1) : null;
             return (
               <tr key={c.id} className="border-aq-border border-b align-top last:border-b-0">
                 <td className="px-3 py-3">
@@ -73,7 +73,13 @@ export function ScorecardTable({
                   </div>
                 </td>
                 <td className="text-aq-sm text-aq-ink px-3 py-3 whitespace-nowrap">
-                  {s ? `${s.levelLabel} (${s.level}/${c.levels.length - 1})` : "—"}
+                  {s?.notAssessed ? (
+                    <span className="text-aq-warn">Not judged</span>
+                  ) : s ? (
+                    `${s.levelLabel} (${s.level}/${c.levels.length - 1})`
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap">
                   <span className="text-aq-sm text-aq-ink font-mono font-medium">

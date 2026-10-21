@@ -16,7 +16,7 @@ import type { PrescreenResult } from "../schemas/evaluation";
 import type { ArmorIQEvidence, MediaDigest } from "../schemas/evidence";
 import { levelsById, type Scorecard } from "../schemas/findings";
 import type { JevDecision } from "../schemas/jev";
-import { type Criterion, type Rubric, weightedScore } from "../schemas/rubric";
+import { type Criterion, partialWeightedScore, type Rubric } from "../schemas/rubric";
 import type { Submission } from "../schemas/submission";
 import { decideRoute, recompute } from "./route";
 
@@ -75,7 +75,9 @@ export async function calibrate(
   { rubric, policy, jev }: CalibrateDeps,
 ): Promise<CalibrationResult> {
   const levels = levelsById(card);
-  const rubricScore = weightedScore(rubric, levels);
+  // Criteria that could not be judged (no usable source) are left out and the rest renormalized.
+  const judged = new Set(card.scores.filter((s) => !s.notAssessed).map((s) => s.criterionId));
+  const rubricScore = partialWeightedScore(rubric, levels, judged);
   const penalties = assessPenalties(rubric, sub, media, evidence);
   const autoScore = applyPenalties(rubricScore, penalties);
   if (!jev) {

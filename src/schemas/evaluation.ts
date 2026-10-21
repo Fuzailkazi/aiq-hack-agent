@@ -80,6 +80,8 @@ export const EvaluationSchema = z.object({
   evidence: ArmorIQEvidenceSchema.nullable().default(null),
   gate: GateResultSchema.nullable().default(null),
   mediaUnreachable: z.record(z.string(), z.string()).default({}),
+  /** What the score could not take into account (a video that could not be watched, a step that failed). */
+  warnings: z.array(z.string()).default([]),
   /** The deck/video digest the agents saw (slide text, image paths, transcript); the UI's evidence viewer. */
   media: MediaDigestSchema.nullable().default(null),
   prescreen: PrescreenResultSchema.nullable().default(null),

@@ -40,6 +40,11 @@ export function reroute(db: DB, hackathonId: string, rubric: Rubric, policy: Pol
       ev.calibration.flags,
       ev.gate?.flags ?? [],
     );
+    // A score with gaps (warnings) always stays with a judge, whatever the routing policy says.
+    if (ev.warnings.length && decision.route === "accept") {
+      decision.route = "review";
+      decision.reasons.push("parts of the submission could not be reviewed");
+    }
     const next: Status = decision.route === "accept" ? "finalized" : "needs_review";
     try {
       q.saveEvaluation(
