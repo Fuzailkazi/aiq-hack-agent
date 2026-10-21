@@ -432,6 +432,7 @@ export interface paths {
                             teamName: string;
                             finalScore: number;
                             autoScore: number | null;
+                            judgeScore: number | null;
                             overridden: boolean;
                         }[];
                     };
@@ -570,6 +571,7 @@ export interface paths {
                             }[];
                             autoScore: number | null;
                             finalScore: number | null;
+                            judgeScore: number | null;
                             confidence: number | null;
                         }[];
                     };
@@ -985,6 +987,20 @@ export interface paths {
                                     /** @default null */
                                     rubricVersion: string | null;
                                 }[];
+                                /** @default [] */
+                                judgeScores: {
+                                    reviewer: string;
+                                    points: {
+                                        [key: string]: number;
+                                    };
+                                    /** @default  */
+                                    notes: string;
+                                    total: number;
+                                    /** Format: date-time */
+                                    at: string;
+                                    /** @default null */
+                                    rubricVersion: string | null;
+                                }[];
                                 /**
                                  * @default {
                                  *       "llmCalls": 0,
@@ -1118,6 +1134,65 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/submissions/{id}/judge-score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reviewer: string;
+                        points: {
+                            [key: string]: number;
+                        };
+                        notes?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            reviewer: string;
+                            points: {
+                                [key: string]: number;
+                            };
+                            /** @default  */
+                            notes: string;
+                            total: number;
+                            /** Format: date-time */
+                            at: string;
+                            /** @default null */
+                            rubricVersion: string | null;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

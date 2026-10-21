@@ -71,6 +71,8 @@ export const SubmissionRowSchema = z.object({
   checks: z.array(CheckSchema),
   autoScore: z.number().nullable(),
   finalScore: z.number().nullable(),
+  /** The judges' average of their own scores, or null when no judge has scored the team. */
+  judgeScore: z.number().nullable(),
   confidence: z.number().nullable(),
 });
 
@@ -96,6 +98,13 @@ export const DecisionSchema = z.object({
   reviewer: z.string().min(1).max(100),
   notes: z.string().max(5000).optional(),
   overrides: z.record(z.string(), z.string()).optional(),
+});
+
+export const JudgeScoreBodySchema = z.object({
+  reviewer: z.string().min(1).max(100),
+  /** criterionId -> points, 0..the criterion's weight. */
+  points: z.record(z.string(), z.number()),
+  notes: z.string().max(5000).optional(),
 });
 
 export const TransitionSchema = z.object({ from: StatusSchema, to: StatusSchema });
@@ -131,6 +140,7 @@ export const LeaderboardRowSchema = z.object({
   teamName: z.string(),
   finalScore: z.number(),
   autoScore: z.number().nullable(),
+  judgeScore: z.number().nullable(),
   overridden: z.boolean(),
 });
 

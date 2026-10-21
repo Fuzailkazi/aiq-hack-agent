@@ -9,11 +9,11 @@ gemini:
   synthesis: gemini-3.5-flash
   transcribe: gemini-3.5-flash
 openai:
-  deck: gpt-5-mini
-  video: gpt-5-mini
-  integration: gpt-5-mini
-  form: gpt-5-mini
-  synthesis: gpt-5
+  deck: gpt-6-luna
+  video: gpt-6-luna
+  integration: gpt-6-luna
+  form: gpt-6-luna
+  synthesis: gpt-6-luna
   transcribe: whisper-1
 # Optional prices for cost estimates in `hackeval status` (left empty: fill in from your accounts), e.g.
 #   prices:

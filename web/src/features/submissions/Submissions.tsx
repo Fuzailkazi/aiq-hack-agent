@@ -12,7 +12,7 @@ import { STATUS, StatusPill } from "../../shared/status";
 import { AppShell } from "../../shell/AppShell";
 import { useHackathon } from "../hackathons/useHackathon";
 
-const GRID = "md:grid-cols-[minmax(0,2.2fr)_7rem_8rem_9rem_minmax(0,1.6fr)] md:items-center md:gap-x-5";
+const GRID = "md:grid-cols-[minmax(0,2.2fr)_7rem_8rem_9rem_4rem_minmax(0,1.6fr)] md:items-center md:gap-x-5";
 
 export function Submissions() {
   const hid = useParams().hid ?? "";
@@ -83,6 +83,7 @@ export function Submissions() {
               <span>Track</span>
               <span>Requirements</span>
               <span>AI score</span>
+              <span>Judge</span>
               <span>Status</span>
             </div>
             <div className="divide-aq-border divide-y">
@@ -116,6 +117,13 @@ export function Submissions() {
                       <ScoreBar value={s.autoScore} size="sm" />
                     ) : (
                       <span className="text-aq-xs text-aq-ink-faint">Not scored</span>
+                    )}
+                  </span>
+                  <span className="text-aq-sm font-mono">
+                    {typeof s.judgeScore === "number" ? (
+                      <span className="text-aq-ink">{s.judgeScore.toFixed(1)}</span>
+                    ) : (
+                      <span className="text-aq-xs text-aq-ink-faint font-sans">—</span>
                     )}
                   </span>
                   <span className="flex min-w-0 flex-col items-start gap-1">

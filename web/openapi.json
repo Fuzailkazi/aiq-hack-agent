@@ -798,6 +798,10 @@
                         "nullable": true,
                         "type": "number"
                       },
+                      "judgeScore": {
+                        "nullable": true,
+                        "type": "number"
+                      },
                       "overridden": {
                         "type": "boolean"
                       }
@@ -809,6 +813,7 @@
                       "teamName",
                       "finalScore",
                       "autoScore",
+                      "judgeScore",
                       "overridden"
                     ],
                     "additionalProperties": false
@@ -1058,6 +1063,10 @@
                         "nullable": true,
                         "type": "number"
                       },
+                      "judgeScore": {
+                        "nullable": true,
+                        "type": "number"
+                      },
                       "confidence": {
                         "nullable": true,
                         "type": "number"
@@ -1074,6 +1083,7 @@
                       "checks",
                       "autoScore",
                       "finalScore",
+                      "judgeScore",
                       "confidence"
                     ],
                     "additionalProperties": false
@@ -2407,6 +2417,51 @@
                             "additionalProperties": false
                           }
                         },
+                        "judgeScores": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "reviewer": {
+                                "type": "string"
+                              },
+                              "points": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "number",
+                                  "minimum": 0
+                                }
+                              },
+                              "notes": {
+                                "default": "",
+                                "type": "string"
+                              },
+                              "total": {
+                                "type": "number"
+                              },
+                              "at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              "rubricVersion": {
+                                "default": null,
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "reviewer",
+                              "points",
+                              "notes",
+                              "total",
+                              "at",
+                              "rubricVersion"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
                         "usage": {
                           "default": {
                             "llmCalls": 0,
@@ -2513,6 +2568,7 @@
                         "scorecard",
                         "calibration",
                         "reviews",
+                        "judgeScores",
                         "usage",
                         "autoScore",
                         "finalScore",
@@ -2773,6 +2829,102 @@
                   "required": [
                     "from",
                     "to"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/judge-score": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reviewer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "points": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  }
+                },
+                "required": [
+                  "reviewer",
+                  "points"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reviewer": {
+                      "type": "string"
+                    },
+                    "points": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "notes": {
+                      "default": "",
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "rubricVersion": {
+                      "default": null,
+                      "nullable": true,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "reviewer",
+                    "points",
+                    "notes",
+                    "total",
+                    "at",
+                    "rubricVersion"
                   ],
                   "additionalProperties": false
                 }

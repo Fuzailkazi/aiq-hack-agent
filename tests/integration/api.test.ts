@@ -244,8 +244,36 @@ describe("API organizer flow", () => {
     expect(one.submission.teamName).toBe("Echo");
     expect(one.evaluation.reviews[0].reviewer).toBe("ana");
 
+    // A judge's own points: saved next to the AI score, without changing the status.
+    const rubric = (await api("GET", "/api/hackathons/demo")).json().rubric as {
+      criteria: { id: string; weight: number }[];
+    };
+    const [waiting] = (await api("GET", "/api/hackathons/demo/submissions?status=needs_review")).json() as {
+      id: string;
+    }[];
+    const half = Object.fromEntries(rubric.criteria.map((c) => [c.id, c.weight / 2]));
+    const mine = await api("PUT", `/api/submissions/${waiting.id}/judge-score`, {
+      reviewer: "ana",
+      points: half,
+    });
+    expect(mine.statusCode).toBe(200);
+    expect(mine.json().reviewer).toBe("ana");
+    const tooMany = { ...half, [rubric.criteria[0].id]: 1000 };
+    expect(
+      (await api("PUT", `/api/submissions/${waiting.id}/judge-score`, { reviewer: "ana", points: tooMany }))
+        .statusCode,
+    ).toBe(400);
+    const row = (
+      (await api("GET", "/api/hackathons/demo/submissions?status=needs_review")).json() as {
+        id: string;
+        judgeScore: number | null;
+      }[]
+    ).find((r) => r.id === waiting.id);
+    expect(row?.judgeScore).toBe(mine.json().total);
+
     const board = (await api("GET", "/api/hackathons/demo/leaderboard")).json() as { teamName: string }[];
-    expect(board).toHaveLength(3);
+    // The judged needs_review team joins the three finalized ones.
+    expect(board).toHaveLength(4);
     const csv = await api("GET", "/api/hackathons/demo/leaderboard.csv");
     expect(csv.headers["content-type"]).toContain("text/csv");
     expect(csv.body.split("\n")[0]).toContain("rank");

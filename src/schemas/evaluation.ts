@@ -56,6 +56,19 @@ export type HumanReview = z.infer<typeof HumanReviewSchema>;
 /** What callers pass in: defaults (overrides, notes, rubricVersion) are filled when the review is recorded. */
 export type HumanReviewInput = z.input<typeof HumanReviewSchema>;
 
+/** A judge's own score, kept next to the AI score (one per judge; saving again replaces it). */
+export const JudgeScoreSchema = z.object({
+  reviewer: z.string(),
+  /** criterionId -> points awarded, 0..the criterion's weight. */
+  points: z.record(z.string(), z.number().min(0)),
+  notes: z.string().default(""),
+  /** 0-100: the points normalized by the rubric's weights, minus the same deductions as the AI score. */
+  total: z.number(),
+  at: Timestamp,
+  rubricVersion: z.string().nullable().default(null),
+});
+export type JudgeScore = z.infer<typeof JudgeScoreSchema>;
+
 export const UsageSchema = z.object({
   llmCalls: z.number().int().default(0),
   inputTokens: z.number().int().default(0),
@@ -89,6 +102,7 @@ export const EvaluationSchema = z.object({
   scorecard: ScorecardSchema.nullable().default(null),
   calibration: CalibrationResultSchema.nullable().default(null),
   reviews: z.array(HumanReviewSchema).default([]),
+  judgeScores: z.array(JudgeScoreSchema).default([]),
   usage: UsageSchema.default({ llmCalls: 0, inputTokens: 0, outputTokens: 0, jevCalls: 0, byModel: {} }),
   autoScore: z.number().nullable().default(null),
   finalScore: z.number().nullable().default(null),

@@ -10,6 +10,7 @@ import {
   IconPlay,
   IconScroll,
   IconShieldCheck,
+  IconSliders,
   IconUpload,
 } from "@shared/icons";
 import { Banner, Chip, ListRow, PageState } from "@shared/ui";
@@ -30,6 +31,7 @@ import { RunPanel } from "../hackathons/RunPanel";
 import { useHackathon } from "../hackathons/useHackathon";
 import { AttachForm } from "./AttachForm";
 import { EvidenceViewer } from "./EvidenceViewer";
+import { JudgeScoreForm } from "./JudgeScoreForm";
 import { DECISIONS, ReviewForm } from "./ReviewForm";
 import { ScorecardTable } from "./ScorecardTable";
 
@@ -77,6 +79,11 @@ export function SubmissionDetail() {
   const reviewable = (DECISIONS[status] ?? []).length > 0;
   const reasons = detail.data.reasons;
   const hasJev = (calibration?.criteria ?? []).some((c) => c.jevProbs !== null);
+  const judgeable = (status === "needs_review" || status === "finalized") && Boolean(evaluation?.scorecard);
+  const judgeScores = evaluation?.judgeScores ?? [];
+  const judgeAverage = judgeScores.length
+    ? judgeScores.reduce((sum, s) => sum + s.total, 0) / judgeScores.length
+    : null;
   const a = submission.answers;
   const links = [
     { label: "Repository", href: submission.repoUrl, icon: IconCode },
@@ -154,6 +161,14 @@ export function SubmissionDetail() {
                   {evaluation.finalScore !== null && (
                     <StatCell label="AI score" value={evaluation.autoScore} format={(n) => n.toFixed(1)} />
                   )}
+                  {judgeAverage !== null && (
+                    <StatCell
+                      label={judgeScores.length > 1 ? "Judges' average" : "Judge's score"}
+                      value={judgeAverage}
+                      format={(n) => n.toFixed(1)}
+                      hint={judgeScores.map((s) => s.reviewer).join(", ")}
+                    />
+                  )}
                   {hasJev && (
                     <StatCell
                       label="Confidence"
@@ -226,6 +241,12 @@ export function SubmissionDetail() {
             <CheckList checks={detail.data.checks} />
           </Panel>
         </div>
+
+        {judgeable && rubric && (
+          <Panel title="Your score" icon={IconSliders} tone="accent">
+            <JudgeScoreForm key={submission.id} detail={detail.data} rubric={rubric} />
+          </Panel>
+        )}
 
         {reviewable && (
           <Panel title="Decision" icon={IconAlert} tone="warn">

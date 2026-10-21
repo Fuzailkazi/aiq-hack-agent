@@ -1,5 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { beforeEach, describe, expect, it } from "vitest";
+import { judgeAverage, saveJudgeScore } from "../../src/judgeScore";
 import { buildLeaderboard, leaderboardCsv } from "../../src/leaderboard";
 import { resolveReview } from "../../src/review";
 import { CalibrationResultSchema } from "../../src/schemas/calibration";
@@ -152,7 +153,7 @@ describe("leaderboard", () => {
       [2, "Charlie", 66.67],
     ]);
     expect(leaderboardCsv(rows).split("\n")[0]).toBe(
-      "rank,submission_id,team_name,final_score,auto_score,overridden,track",
+      "rank,submission_id,team_name,final_score,auto_score,overridden,track,judge_score",
     );
   });
 
@@ -186,7 +187,7 @@ describe("leaderboard", () => {
       ["elevenlabs", 1, "Team f"],
       ["elevenlabs", 2, "Team e"],
     ]);
-    expect(leaderboardCsv(rows).trim().split("\n").at(-1)?.endsWith(",elevenlabs")).toBe(true);
+    expect(leaderboardCsv(rows).trim().split("\n").at(-1)?.endsWith(",elevenlabs,")).toBe(true);
   });
 
   it("neutralizes spreadsheet formulas in team names", () => {
@@ -198,10 +199,62 @@ describe("leaderboard", () => {
         teamName: '=HYPERLINK("http://x")',
         finalScore: 90,
         autoScore: 90,
+        judgeScore: null,
         overridden: false,
       },
     ]);
     const rows = parse(csv, { columns: true }) as Record<string, string>[];
     expect(rows[0].team_name).toBe(`'=HYPERLINK("http://x")`);
+  });
+});
+
+describe("judge scores", () => {
+  /** Every criterion at the same fraction of its weight. */
+  const points = (fraction: number) =>
+    Object.fromEntries(rubric.criteria.map((c) => [c.id, Math.round(1e6 * c.weight * fraction) / 1e6]));
+
+  it("normalizes points to 0-100, keeps the AI's deductions and replaces a judge's earlier score", () => {
+    const ev = scored("d", 1, "needs_review");
+    ev.calibration = CalibrationResultSchema.parse({
+      ...ev.calibration,
+      penalties: [{ id: "social_post", label: "No post", points: 5, detail: "none" }],
+    });
+    q.saveEvaluation(db, ev);
+    expect(saveJudgeScore(db, "d", { reviewer: "Fuzail", points: points(0.5) }, T0).total).toBe(45);
+    saveJudgeScore(db, "d", { reviewer: "fuzail", points: points(1), notes: "great" }, T0);
+    saveJudgeScore(db, "d", { reviewer: "Isha", points: points(0.5) }, T0);
+    const saved = q.getEvaluation(db, "d");
+    expect(saved?.judgeScores.map((s) => [s.reviewer, s.total])).toEqual([
+      ["fuzail", 95],
+      ["Isha", 45],
+    ]);
+    expect(judgeAverage(saved)).toBe(70);
+    // A judge's score never changes the team's status.
+    expect(q.getSubmission(db, "d").status).toBe("needs_review");
+  });
+
+  it("rejects missing criteria, points above the weight, and teams the AI has not scored", () => {
+    q.saveEvaluation(db, scored("d", 1, "needs_review"));
+    const { [rubric.criteria[0].id]: _, ...partial } = points(0.5);
+    expect(() => saveJudgeScore(db, "d", { reviewer: "j", points: partial }, T0)).toThrow(/every criterion/);
+    expect(() =>
+      saveJudgeScore(db, "d", { reviewer: "j", points: { ...points(0.5), [rubric.criteria[0].id]: 99 } }, T0),
+    ).toThrow(/takes 0 to/);
+    q.saveEvaluation(db, { ...scored("c", 1, "scoring"), scorecard: null });
+    expect(() => saveJudgeScore(db, "c", { reviewer: "j", points: points(0.5) }, T0)).toThrow(/once the AI/);
+  });
+
+  it("ranks by the judges' average, and lists AI-scored teams a judge has scored", () => {
+    q.saveEvaluation(db, scored("a", 3, "finalized"));
+    q.saveEvaluation(db, scored("d", 1, "needs_review"));
+    q.saveEvaluation(db, scored("b", 2, "needs_review"));
+    saveJudgeScore(db, "a", { reviewer: "j", points: points(0.4) }, T0);
+    saveJudgeScore(db, "d", { reviewer: "j", points: points(0.9) }, T0);
+    const rows = buildLeaderboard(db, "h");
+    expect(rows.map((r) => [r.rank, r.teamName, r.finalScore, r.judgeScore])).toEqual([
+      [1, "Delta", 90, 90],
+      [2, "Alpha", 40, 40],
+    ]);
+    expect(leaderboardCsv(rows).split("\n")[1].endsWith(",90")).toBe(true);
   });
 });

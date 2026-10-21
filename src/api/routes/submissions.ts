@@ -2,7 +2,8 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { addSubmission, importCsv } from "../../intake";
-import { StatusSchema } from "../../schemas/evaluation";
+import { judgeAverage, saveJudgeScore } from "../../judgeScore";
+import { JudgeScoreSchema, StatusSchema } from "../../schemas/evaluation";
 import { attachFiles, checklist, decide, statusReasons } from "../../service";
 import { intakeOf } from "../../settings";
 import * as q from "../../store/queries";
@@ -13,6 +14,7 @@ import {
   HidParams,
   IdParams,
   ImportReportSchema,
+  JudgeScoreBodySchema,
   SubmissionDetailSchema,
   SubmissionRowSchema,
   TransitionSchema,
@@ -104,6 +106,7 @@ export const submissionRoutes =
               checks: checklist(submission, ev),
               autoScore: ev?.autoScore ?? null,
               finalScore: ev?.finalScore ?? null,
+              judgeScore: judgeAverage(ev),
               confidence: ev?.calibration?.confidence ?? null,
             };
           });
@@ -131,6 +134,12 @@ export const submissionRoutes =
       "/api/submissions/:id/decision",
       { schema: { params: IdParams, body: DecisionSchema, response: { 200: TransitionSchema } } },
       async (req) => decide(db, req.params.id, req.body, nowIso()),
+    );
+
+    app.put(
+      "/api/submissions/:id/judge-score",
+      { schema: { params: IdParams, body: JudgeScoreBodySchema, response: { 200: JudgeScoreSchema } } },
+      async (req) => saveJudgeScore(db, req.params.id, req.body, nowIso()),
     );
 
     app.post(

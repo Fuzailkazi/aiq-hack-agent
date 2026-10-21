@@ -1,7 +1,9 @@
 /**
- * Leaderboard over finalized submissions (a human override beats the auto score). Each track (e.g. the ElevenLabs
- * prize) is ranked on its own; submissions without a track form one group.
+ * Leaderboard over judged submissions: finalized ones, and AI-scored ones a judge has entered a score for. The
+ * ranking score is the judges' average when there is one, else the confirmed score (a human override beats the auto
+ * score). Each track (e.g. the ElevenLabs prize) is ranked on its own; submissions without a track form one group.
  */
+import { judgeAverage } from "./judgeScore";
 import type { DB } from "./store/db";
 import * as q from "./store/queries";
 
@@ -11,8 +13,11 @@ export interface LeaderboardRow {
   track: string | null;
   submissionId: string;
   teamName: string;
+  /** The ranking score: the judges' average when there is one, else the confirmed score. */
   finalScore: number;
   autoScore: number | null;
+  /** The judges' average (their own points per criterion), or null when no judge has scored the team. */
+  judgeScore: number | null;
   overridden: boolean;
 }
 
@@ -20,16 +25,21 @@ export function buildLeaderboard(db: DB, hackathonId: string): LeaderboardRow[] 
   const entries: Omit<LeaderboardRow, "rank">[] = [];
   // The leaderboard is per rubric version: only results scored under the active one are ranked.
   const { activeRubricId, activeRubricVersion } = q.getHackathon(db, hackathonId);
-  for (const record of q.currentSubmissions(db, hackathonId, ["finalized"])) {
+  for (const record of q.currentSubmissions(db, hackathonId, ["finalized", "needs_review"])) {
     const evaluation = q.getEvaluation(db, record.submission.id);
-    if (!evaluation || evaluation.finalScore === null) continue;
+    if (!evaluation) continue;
     if (evaluation.rubricId !== activeRubricId || evaluation.rubricVersion !== activeRubricVersion) continue;
+    const judgeScore = judgeAverage(evaluation);
+    const confirmed = record.status === "finalized" ? evaluation.finalScore : null;
+    const finalScore = judgeScore ?? confirmed;
+    if (finalScore === null) continue;
     entries.push({
       track: record.submission.track,
       submissionId: record.submission.id,
       teamName: record.submission.teamName,
-      finalScore: evaluation.finalScore,
+      finalScore,
       autoScore: evaluation.autoScore,
+      judgeScore,
       overridden: evaluation.reviews.some((r) => r.decision === "override"),
     });
   }
@@ -53,7 +63,16 @@ export function buildLeaderboard(db: DB, hackathonId: string): LeaderboardRow[] 
 }
 
 export function leaderboardCsv(rows: LeaderboardRow[]): string {
-  const header = ["rank", "submission_id", "team_name", "final_score", "auto_score", "overridden", "track"];
+  const header = [
+    "rank",
+    "submission_id",
+    "team_name",
+    "final_score",
+    "auto_score",
+    "overridden",
+    "track",
+    "judge_score",
+  ];
   const lines = rows.map((r) =>
     [
       r.rank,
@@ -63,6 +82,7 @@ export function leaderboardCsv(rows: LeaderboardRow[]): string {
       r.autoScore ?? "",
       r.overridden ? "True" : "False",
       r.track ?? "",
+      r.judgeScore ?? "",
     ]
       .map(csvCell)
       .join(","),
