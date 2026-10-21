@@ -143,7 +143,7 @@ describe("hackeval CLI", () => {
     const naive = await cli("init", "demo", "--deadline", "2026-10-20T23:59:00");
     expect(naive.code).toBe(1);
     expect(naive.err).toContain("timezone offset");
-    await ok("init", "demo", "--deadline", "2026-10-20T23:59:00-07:00");
+    await ok("init", "demo", "--deadline", "2099-10-20T23:59:00-07:00");
     const bad = await cli("add", "--team", "X", "--repo", "N/A");
     expect(bad.code).toBe(1);
     expect(bad.err).toContain("repo_url must be a repository URL");

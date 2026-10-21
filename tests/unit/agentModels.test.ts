@@ -18,7 +18,7 @@ describe("model factory", () => {
     delete process.env.OPENAI_API_KEY;
     const model = buildModel("openai", "synthesis", MODELS);
     expect(model).toBeInstanceOf(OpenAILlm);
-    expect((model as OpenAILlm).model).toBe("gpt-5");
+    expect((model as OpenAILlm).model).toBe("gpt-6-luna");
     if (saved) process.env.OPENAI_API_KEY = saved;
   });
 

@@ -92,7 +92,9 @@ export function Leaderboard() {
                   <span className="text-aq-stat tracking-aq-tight text-aq-ink font-mono font-medium">
                     {r.finalScore.toFixed(2)}
                   </span>
-                  <span className="text-aq-xs text-aq-ink-muted">AI score {score(r.autoScore)}</span>
+                  <span className="text-aq-xs text-aq-ink-muted">
+                    AI score {score(r.autoScore)} · judge {score(r.judgeScore)}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -113,7 +115,7 @@ export function Leaderboard() {
                         {r.teamName}
                       </Link>
                     }
-                    meta={`AI score ${score(r.autoScore)}`}
+                    meta={`AI score ${score(r.autoScore)} · judge ${score(r.judgeScore)}`}
                     trailing={<ScoreBar value={r.finalScore} tone="good" size="sm" />}
                   />
                 ))}

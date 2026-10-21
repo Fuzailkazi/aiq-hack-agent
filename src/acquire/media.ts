@@ -83,10 +83,17 @@ export function sniff(head: Buffer): string | null {
   return null;
 }
 
-/** Download a hosted video with the yt-dlp binary (single-file format, so no ffmpeg merge step). */
+/**
+ * yt-dlp format: a single file when the host offers one, else video (≤720p, enough for keyframes) + audio merged by
+ * ffmpeg. YouTube often serves only separate streams, where a single-file selector finds nothing.
+ */
+export const YTDLP_FORMAT = "b[ext=mp4][height<=720]/bv*[height<=720]+ba/b";
+
+/** Download a hosted video with the yt-dlp binary (merging separate streams into an mp4 with ffmpeg when needed). */
 export const ytdlpDownload: VideoDownloader = (url, destDir, maxBytes) =>
   new Promise((resolve, reject) => {
-    const args = ["-f", "best[ext=mp4]/best", "--max-filesize", String(maxBytes), "--no-playlist", "--quiet"];
+    const args = ["-f", YTDLP_FORMAT, "--merge-output-format", "mp4", "--max-filesize", String(maxBytes)];
+    args.push("--no-playlist", "--quiet");
     args.push("-o", join(destDir, "download.%(ext)s"), "--print", "after_move:filepath", "--", url);
     execFile("yt-dlp", args, { timeout: 15 * 60_000 }, (error, stdout, stderr) => {
       if (error) {
